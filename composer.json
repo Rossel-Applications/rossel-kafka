@@ -1,0 +1,22 @@
+{
+    "name": "rossel/rossel-kafka-php-kit",
+    "description": "A ready-to-use PHP library for seamless communication with Rossel's Kafka infrastructure, handling both production and consumption of messages.",
+    "type": "library",
+    "autoload": {
+        "psr-4": {
+            "Rossel\\RosselKafkaPhpKit\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Florian Vaneste"
+        },
+        {
+            "name": "Sébastien Gosselin"
+        }
+    ],
+    "require": {
+        "enqueue/enqueue-bundle": "^0.10.24",
+        "enqueue/fs": "^0.10.19"
+    }
+}
