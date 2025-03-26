@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "87bca1602eebd51170b9558494e8e14d",
+    "content-hash": "4b1b04ffc9307a3b1e0e6b70043bfd56",
     "packages": [
         {
             "name": "brick/math",
@@ -422,6 +422,66 @@
             "time": "2023-03-23T09:50:55+00:00"
         },
         {
+            "name": "enqueue/rdkafka",
+            "version": "0.10.20",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/php-enqueue/rdkafka.git",
+                "reference": "d1dfe0422a15f25ef4dfda5eff5cf29633079949"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/php-enqueue/rdkafka/zipball/d1dfe0422a15f25ef4dfda5eff5cf29633079949",
+                "reference": "d1dfe0422a15f25ef4dfda5eff5cf29633079949",
+                "shasum": ""
+            },
+            "require": {
+                "ext-rdkafka": "^4.0|^5.0|^6.0",
+                "php": "^7.4|^8.0",
+                "queue-interop/queue-interop": "^0.8.1"
+            },
+            "require-dev": {
+                "enqueue/null": "0.10.x-dev",
+                "enqueue/test": "0.10.x-dev",
+                "kwn/php-rdkafka-stubs": "^2.0.3",
+                "phpunit/phpunit": "^9.5",
+                "queue-interop/queue-spec": "^0.6.2"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "0.10.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Enqueue\\RdKafka\\": ""
+                },
+                "exclude-from-classmap": [
+                    "/Tests/"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "Message Queue Kafka Transport",
+            "homepage": "https://enqueue.forma-pro.com/",
+            "keywords": [
+                "kafka",
+                "messaging",
+                "queue"
+            ],
+            "support": {
+                "docs": "https://github.com/php-enqueue/enqueue-dev/blob/master/docs/index.md",
+                "email": "opensource@forma-pro.com",
+                "forum": "https://gitter.im/php-enqueue/Lobby",
+                "issues": "https://github.com/php-enqueue/enqueue-dev/issues",
+                "source": "https://github.com/php-enqueue/enqueue-dev"
+            },
+            "time": "2023-08-08T20:59:25+00:00"
+        },
+        {
             "name": "makasim/temp-file",
             "version": "0.2.0",
             "source": {
@@ -466,6 +526,64 @@
                 "source": "https://github.com/makasim/TempFile/tree/master"
             },
             "time": "2013-07-12T06:09:04+00:00"
+        },
+        {
+            "name": "phpstan/phpstan",
+            "version": "2.1.11",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/phpstan/phpstan.git",
+                "reference": "8ca5f79a8f63c49b2359065832a654e1ec70ac30"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/8ca5f79a8f63c49b2359065832a654e1ec70ac30",
+                "reference": "8ca5f79a8f63c49b2359065832a654e1ec70ac30",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^7.4|^8.0"
+            },
+            "conflict": {
+                "phpstan/phpstan-shim": "*"
+            },
+            "bin": [
+                "phpstan",
+                "phpstan.phar"
+            ],
+            "type": "library",
+            "autoload": {
+                "files": [
+                    "bootstrap.php"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "PHPStan - PHP Static Analysis Tool",
+            "keywords": [
+                "dev",
+                "static analysis"
+            ],
+            "support": {
+                "docs": "https://phpstan.org/user-guide/getting-started",
+                "forum": "https://github.com/phpstan/phpstan/discussions",
+                "issues": "https://github.com/phpstan/phpstan/issues",
+                "security": "https://github.com/phpstan/phpstan/security/policy",
+                "source": "https://github.com/phpstan/phpstan-src"
+            },
+            "funding": [
+                {
+                    "url": "https://github.com/ondrejmirtes",
+                    "type": "github"
+                },
+                {
+                    "url": "https://github.com/phpstan",
+                    "type": "github"
+                }
+            ],
+            "time": "2025-03-24T13:45:00+00:00"
         },
         {
             "name": "psr/cache",
@@ -2591,7 +2709,9 @@
     "stability-flags": {},
     "prefer-stable": false,
     "prefer-lowest": false,
-    "platform": {},
+    "platform": {
+        "php": ">= 8.2"
+    },
     "platform-dev": {},
     "plugin-api-version": "2.6.0"
 }

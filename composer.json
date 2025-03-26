@@ -16,7 +16,12 @@
         }
     ],
     "require": {
+        "php": ">= 8.2",
+        "phpstan/phpstan": "^2.1",
         "enqueue/enqueue-bundle": "^0.10.24",
-        "enqueue/fs": "^0.10.19"
+        "enqueue/fs": "^0.10.19",
+        "ramsey/uuid": "^4.7",
+        "psr/log": "^3.0",
+        "enqueue/rdkafka": "^0.10.20"
     }
 }

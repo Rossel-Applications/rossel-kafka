@@ -7,3 +7,11 @@ A ready-to-use PHP library for seamless communication with Rossel's Kafka infras
 ```shell
 composer require rossel/rossel-kafka-php-kit
 ```
+
+## Configuration
+
+```yaml
+rossel_kafka:
+  address: localhost
+  port: 9999
+```

@@ -10,8 +10,95 @@
     <option name="highlightLevel" value="WARNING" />
     <option name="transferred" value="true" />
   </component>
+  <component name="PhpIncludePathManager">
+    <include_path>
+      <path value="$PROJECT_DIR$/vendor/psr/cache" />
+      <path value="$PROJECT_DIR$/vendor/psr/container" />
+      <path value="$PROJECT_DIR$/vendor/psr/log" />
+      <path value="$PROJECT_DIR$/vendor/psr/event-dispatcher" />
+      <path value="$PROJECT_DIR$/vendor/queue-interop/queue-interop" />
+      <path value="$PROJECT_DIR$/vendor/makasim/temp-file" />
+      <path value="$PROJECT_DIR$/vendor/composer" />
+      <path value="$PROJECT_DIR$/vendor/brick/math" />
+      <path value="$PROJECT_DIR$/vendor/enqueue/null" />
+      <path value="$PROJECT_DIR$/vendor/symfony/event-dispatcher" />
+      <path value="$PROJECT_DIR$/vendor/enqueue/enqueue-bundle" />
+      <path value="$PROJECT_DIR$/vendor/enqueue/fs" />
+      <path value="$PROJECT_DIR$/vendor/enqueue/dsn" />
+      <path value="$PROJECT_DIR$/vendor/symfony/http-foundation" />
+      <path value="$PROJECT_DIR$/vendor/symfony/error-handler" />
+      <path value="$PROJECT_DIR$/vendor/symfony/polyfill-php83" />
+      <path value="$PROJECT_DIR$/vendor/symfony/cache-contracts" />
+      <path value="$PROJECT_DIR$/vendor/symfony/var-dumper" />
+      <path value="$PROJECT_DIR$/vendor/symfony/http-kernel" />
+      <path value="$PROJECT_DIR$/vendor/symfony/config" />
+      <path value="$PROJECT_DIR$/vendor/enqueue/enqueue" />
+      <path value="$PROJECT_DIR$/vendor/symfony/polyfill-mbstring" />
+      <path value="$PROJECT_DIR$/vendor/ramsey/uuid" />
+      <path value="$PROJECT_DIR$/vendor/symfony/polyfill-ctype" />
+      <path value="$PROJECT_DIR$/vendor/symfony/deprecation-contracts" />
+      <path value="$PROJECT_DIR$/vendor/symfony/routing" />
+      <path value="$PROJECT_DIR$/vendor/symfony/filesystem" />
+      <path value="$PROJECT_DIR$/vendor/symfony/event-dispatcher-contracts" />
+      <path value="$PROJECT_DIR$/vendor/symfony/var-exporter" />
+      <path value="$PROJECT_DIR$/vendor/symfony/service-contracts" />
+      <path value="$PROJECT_DIR$/vendor/symfony/dependency-injection" />
+      <path value="$PROJECT_DIR$/vendor/symfony/finder" />
+      <path value="$PROJECT_DIR$/vendor/symfony/framework-bundle" />
+      <path value="$PROJECT_DIR$/vendor/ramsey/collection" />
+      <path value="$PROJECT_DIR$/vendor/symfony/cache" />
+      <path value="$PROJECT_DIR$/vendor/queue-interop/amqp-interop" />
+      <path value="$PROJECT_DIR$/vendor/phpstan/phpstan" />
+      <path value="$PROJECT_DIR$/tools/php-cs-fixer/vendor/friendsofphp/php-cs-fixer" />
+      <path value="$PROJECT_DIR$/tools/php-cs-fixer/vendor/sebastian/diff" />
+      <path value="$PROJECT_DIR$/tools/php-cs-fixer/vendor/evenement/evenement" />
+      <path value="$PROJECT_DIR$/tools/php-cs-fixer/vendor/psr/container" />
+      <path value="$PROJECT_DIR$/tools/php-cs-fixer/vendor/psr/log" />
+      <path value="$PROJECT_DIR$/tools/php-cs-fixer/vendor/psr/event-dispatcher" />
+      <path value="$PROJECT_DIR$/tools/php-cs-fixer/vendor/composer" />
+      <path value="$PROJECT_DIR$/tools/php-cs-fixer/vendor/react/child-process" />
+      <path value="$PROJECT_DIR$/tools/php-cs-fixer/vendor/react/socket" />
+      <path value="$PROJECT_DIR$/tools/php-cs-fixer/vendor/react/promise" />
+      <path value="$PROJECT_DIR$/tools/php-cs-fixer/vendor/react/event-loop" />
+      <path value="$PROJECT_DIR$/tools/php-cs-fixer/vendor/react/dns" />
+      <path value="$PROJECT_DIR$/tools/php-cs-fixer/vendor/react/stream" />
+      <path value="$PROJECT_DIR$/tools/php-cs-fixer/vendor/fidry/cpu-core-counter" />
+      <path value="$PROJECT_DIR$/tools/php-cs-fixer/vendor/clue/ndjson-react" />
+      <path value="$PROJECT_DIR$/tools/php-cs-fixer/vendor/symfony/polyfill-php80" />
+      <path value="$PROJECT_DIR$/tools/php-cs-fixer/vendor/symfony/service-contracts" />
+      <path value="$PROJECT_DIR$/tools/php-cs-fixer/vendor/symfony/polyfill-php81" />
+      <path value="$PROJECT_DIR$/tools/php-cs-fixer/vendor/symfony/polyfill-intl-grapheme" />
+      <path value="$PROJECT_DIR$/tools/php-cs-fixer/vendor/symfony/polyfill-intl-normalizer" />
+      <path value="$PROJECT_DIR$/tools/php-cs-fixer/vendor/symfony/polyfill-mbstring" />
+      <path value="$PROJECT_DIR$/tools/php-cs-fixer/vendor/symfony/event-dispatcher" />
+      <path value="$PROJECT_DIR$/tools/php-cs-fixer/vendor/react/cache" />
+      <path value="$PROJECT_DIR$/tools/php-cs-fixer/vendor/symfony/polyfill-ctype" />
+      <path value="$PROJECT_DIR$/tools/php-cs-fixer/vendor/symfony/deprecation-contracts" />
+      <path value="$PROJECT_DIR$/tools/php-cs-fixer/vendor/symfony/console" />
+      <path value="$PROJECT_DIR$/tools/php-cs-fixer/vendor/symfony/process" />
+      <path value="$PROJECT_DIR$/tools/php-cs-fixer/vendor/symfony/string" />
+      <path value="$PROJECT_DIR$/tools/php-cs-fixer/vendor/symfony/filesystem" />
+      <path value="$PROJECT_DIR$/tools/php-cs-fixer/vendor/symfony/event-dispatcher-contracts" />
+      <path value="$PROJECT_DIR$/tools/php-cs-fixer/vendor/symfony/options-resolver" />
+      <path value="$PROJECT_DIR$/tools/php-cs-fixer/vendor/symfony/finder" />
+      <path value="$PROJECT_DIR$/tools/php-cs-fixer/vendor/symfony/stopwatch" />
+      <path value="$PROJECT_DIR$/vendor/enqueue/rdkafka" />
+    </include_path>
+  </component>
+  <component name="PhpProjectSharedConfiguration" php_language_level="8.2" />
+  <component name="PhpStan">
+    <PhpStan_settings>
+      <PhpStanConfiguration tool_path="$PROJECT_DIR$/vendor/bin/phpstan" />
+    </PhpStan_settings>
+  </component>
   <component name="PhpStanOptionsConfiguration">
     <option name="transferred" value="true" />
+  </component>
+  <component name="PhpUnit">
+    <phpunit_settings>
+      <PhpUnitSettings custom_loader_path="$PROJECT_DIR$/tools/php-cs-fixer/vendor/autoload.php" />
+      <PhpUnitSettings custom_loader_path="$PROJECT_DIR$/vendor/autoload.php" />
+    </phpunit_settings>
   </component>
   <component name="PsalmOptionsConfiguration">
     <option name="transferred" value="true" />
