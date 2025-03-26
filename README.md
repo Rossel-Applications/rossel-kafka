@@ -12,6 +12,6 @@ composer require rossel/rossel-kafka-php-kit
 
 ```yaml
 rossel_kafka:
-  address: localhost
-  port: 9999
+  address: %env(KAFKA_BROKER_ADDRESS)%
+  port: %env(KAFKA_BROKER_PORT)%
 ```

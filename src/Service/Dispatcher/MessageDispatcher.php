@@ -28,6 +28,7 @@ final class MessageDispatcher implements MessageDispatcherInterface
 
         $this->rdKafkaContext->createMessage(
             body: $message->getJsonBody(),
+            headers: $message->getHeaders()->toArray(),
         );
     }
 

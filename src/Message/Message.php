@@ -4,6 +4,7 @@ namespace Rossel\RosselKafkaPhpKit\Message;
 
 use Rossel\RosselKafkaPhpKit\Enum\MessageHeaders\MessageType;
 use Rossel\RosselKafkaPhpKit\Model\MessageHeaders;
+use Rossel\RosselKafkaPhpKit\Model\MessageHeadersInterface;
 
 /**
  * Representation of a Kafka message.
@@ -13,11 +14,11 @@ final readonly class Message implements MessageInterface
     /**
      * Initializes the message with the provided headers and body.
      *
-     * @param MessageHeaders $headers The message headers.
+     * @param MessageHeadersInterface $headers The message headers.
      * @param array<string, mixed> $body The message body.
      */
     public function __construct(
-        private MessageHeaders $headers,
+        private MessageHeadersInterface $headers,
         private array $body,
     ) {
     }
@@ -25,17 +26,9 @@ final readonly class Message implements MessageInterface
     /**
      * {@inheritDoc}
      */
-    public function getHeaders(): MessageHeaders
+    public function getHeaders(): MessageHeadersInterface
     {
         return $this->headers;
-    }
-
-    /**
-     * @throws \JsonException
-     */
-    public function getJsonHeaders(): string
-    {
-        return $this->headers->toJson();
     }
 
     /**

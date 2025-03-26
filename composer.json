@@ -22,6 +22,8 @@
         "enqueue/fs": "^0.10.19",
         "ramsey/uuid": "^4.7",
         "psr/log": "^3.0",
-        "enqueue/rdkafka": "^0.10.20"
+        "enqueue/rdkafka": "^0.10.20",
+        "symfony/config": "^6.4",
+        "symfony/http-kernel": "^6.4"
     }
 }

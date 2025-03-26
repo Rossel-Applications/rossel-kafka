@@ -6,7 +6,7 @@ use Ramsey\Uuid\Uuid;
 use Rossel\RosselKafkaPhpKit\Enum\MessageHeaders\Area;
 use Rossel\RosselKafkaPhpKit\Enum\MessageHeaders\MessageType;
 
-final readonly class MessageHeaders
+final readonly class MessageHeaders implements MessageHeadersInterface
 {
     public const DEFAULT_VERSION = '1';
 
@@ -103,7 +103,7 @@ final readonly class MessageHeaders
     /**
      * @return array<string, scalar>
      */
-    private function toArray(): array
+    public function toArray(): array
     {
         return [
             self::KEY_AREA => $this->getArea()->value,
@@ -116,13 +116,5 @@ final readonly class MessageHeaders
             self::KEY_TRACK_ID_ORIGINAL => $this->getTrackIdOriginal(),
             self::KEY_VERSION => $this->getVersion(),
         ];
-    }
-
-    /**
-     * @throws \JsonException
-     */
-    public function toJson(): string
-    {
-        return \json_encode($this->toArray(), JSON_THROW_ON_ERROR);
     }
 }

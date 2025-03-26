@@ -4,6 +4,7 @@ namespace Rossel\RosselKafkaPhpKit\Message;
 
 use Rossel\RosselKafkaPhpKit\Enum\MessageHeaders\MessageType;
 use Rossel\RosselKafkaPhpKit\Model\MessageHeaders;
+use Rossel\RosselKafkaPhpKit\Model\MessageHeadersInterface;
 
 /**
  * Interface to be implemented by classes representing Kafka messages.
@@ -13,11 +14,9 @@ interface MessageInterface
     /**
      * Returns the message headers.
      *
-     * @return MessageHeaders The headers associated with the message.
+     * @return MessageHeadersInterface The headers associated with the message.
      */
-    public function getHeaders(): MessageHeaders;
-
-    public function getJsonHeaders(): string;
+    public function getHeaders(): MessageHeadersInterface;
 
     /**
      * Returns the message body.
