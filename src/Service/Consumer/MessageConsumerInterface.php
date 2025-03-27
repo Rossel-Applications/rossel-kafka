@@ -1,8 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Rossel\RosselKafkaPhpKit\Service\Consumer;
 
-use Rossel\RosselKafkaPhpKit\Message\MessageInterface;
+use Rossel\RosselKafkaPhpKit\Model\MessageInterface;
 
 interface MessageConsumerInterface
 {

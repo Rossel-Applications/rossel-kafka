@@ -1,26 +1,35 @@
 <?php
 
-namespace Rossel\RosselKafkaPhpKit\Message;
+declare(strict_types=1);
 
+namespace Rossel\RosselKafkaPhpKit\Model;
+
+use Enqueue\RdKafka\RdKafkaMessage;
 use Rossel\RosselKafkaPhpKit\Enum\MessageHeaders\MessageType;
-use Rossel\RosselKafkaPhpKit\Model\MessageHeaders;
-use Rossel\RosselKafkaPhpKit\Model\MessageHeadersInterface;
 
 /**
- * Representation of a Kafka message.
+ * Representation of a Kafka message, wrapping RdKafkaMessage class.
  */
 final readonly class Message implements MessageInterface
 {
+    private RdKafkaMessage $rdKafkaMessage;
+
     /**
      * Initializes the message with the provided headers and body.
      *
-     * @param MessageHeadersInterface $headers The message headers.
-     * @param array<string, mixed> $body The message body.
+     * @param MessageHeadersInterface $headers the message headers
+     * @param array<string, mixed>    $body    the message body
+     *
+     * @throws \JsonException
      */
     public function __construct(
         private MessageHeadersInterface $headers,
         private array $body,
     ) {
+        $this->rdKafkaMessage = new RdKafkaMessage(
+            $this->getJsonBody(),
+            $this->headers->toArray(),
+        );
     }
 
     /**
@@ -44,13 +53,19 @@ final readonly class Message implements MessageInterface
      */
     public function getJsonBody(): string
     {
-        return \json_encode($this->body, JSON_THROW_ON_ERROR);
+        return json_encode($this->body, \JSON_THROW_ON_ERROR);
     }
 
     /**
      * {@inheritDoc}
      */
-    public function getType(): MessageType {
+    public function getType(): MessageType
+    {
         return $this->headers->getMessageType();
+    }
+
+    public function getRdKafkaMessage(): RdKafkaMessage
+    {
+        return $this->rdKafkaMessage;
     }
 }

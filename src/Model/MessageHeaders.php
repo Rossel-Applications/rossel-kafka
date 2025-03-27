@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Rossel\RosselKafkaPhpKit\Model;
 
 use Ramsey\Uuid\Uuid;
@@ -27,15 +29,14 @@ final readonly class MessageHeaders implements MessageHeadersInterface
     /**
      * Initializes the message with the provided headers.
      *
-     * @param Area $area The functional area associated with the message.
-     * @param string $from The originating application of the message.
-     * @param MessageType $messageType The message type.
-     * @param string|null $trackId Optional unique identifier for tracking the message. If null, a new UUID will be generated.
-     * @param \DateTimeImmutable|null $dateTime Optional timestamp for the message. If null, the current time is used.
+     * @param Area                    $area             the functional area associated with the message
+     * @param string                  $from             the originating application of the message
+     * @param MessageType             $messageType      the message type
+     * @param string|null             $trackId          Optional unique identifier for tracking the message. If null, a new UUID will be generated.
+     * @param \DateTimeImmutable|null $dateTime         Optional timestamp for the message. If null, the current time is used.
      * @param \DateTimeImmutable|null $dateTimeOriginal Optional original timestamp for the message. Defaults to the value of `$dateTime` if null.
-     * @param string|null $fromOriginal Optional identifier for the original application that issued the message. Defaults to `$from` if null.
-     * @param string|null $trackIdOriginal Optional identifier for the original track ID. Defaults to `$trackId` if null.
-     * @param string $version
+     * @param string|null             $fromOriginal     Optional identifier for the original application that issued the message. Defaults to `$from` if null.
+     * @param string|null             $trackIdOriginal  Optional identifier for the original track ID. Defaults to `$trackId` if null.
      */
     public function __construct(
         private Area $area,
@@ -57,9 +58,6 @@ final readonly class MessageHeaders implements MessageHeadersInterface
         return $this->area;
     }
 
-    /**
-     * @return \DateTimeImmutable
-     */
     public function getDateTime(): \DateTimeImmutable
     {
         return $this->dateTime;
@@ -107,11 +105,11 @@ final readonly class MessageHeaders implements MessageHeadersInterface
     {
         return [
             self::KEY_AREA => $this->getArea()->value,
-            self::KEY_DATE_TIME => $this->getDateTime()->format( \DateTimeInterface::ATOM),
+            self::KEY_DATE_TIME => $this->getDateTime()->format(\DateTimeInterface::ATOM),
             self::KEY_DATE_TIME_ORIGINAL => $this->getDateTimeOriginal()->format(\DateTimeInterface::ATOM),
             self::KEY_FROM => $this->getFrom(),
             self::KEY_FROM_ORIGINAL => $this->getFromOriginal(),
-            self::KEY_MESSAGE_TYPE => $this->getMessageType(),
+            self::KEY_MESSAGE_TYPE => $this->getMessageType()->name,
             self::KEY_TRACK_ID => $this->getTrackId(),
             self::KEY_TRACK_ID_ORIGINAL => $this->getTrackIdOriginal(),
             self::KEY_VERSION => $this->getVersion(),

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Rossel\RosselKafkaPhpKit;
 
 use Rossel\RosselKafkaPhpKit\Enum\Config\RootConfigKeys;
@@ -12,6 +14,7 @@ final class RosselKafkaPhpKitBundle extends AbstractBundle
 
     public function configure(DefinitionConfigurator $definition): void
     {
+        /* @phpstan-ignore method.notFound */
         $definition->rootNode()
             ->children()
                 ->scalarNode(RootConfigKeys::ADDRESS->value)
@@ -24,7 +27,7 @@ final class RosselKafkaPhpKitBundle extends AbstractBundle
                 ->cannotBeEmpty()
                 ->min(1)
                 ->max(65535)
-                ->info(sprintf('The port number to connect to (default: %s).', self::DEFAULT_PORT))
+                ->info(\sprintf('The port number to connect to (default: %s).', self::DEFAULT_PORT))
                 ->end()
             ->end();
     }

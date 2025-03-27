@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Rossel\RosselKafkaPhpKit\Exception;
 
 use Rossel\RosselKafkaPhpKit\Enum\Infrastructure\KafkaTopic;
@@ -12,10 +14,9 @@ final class UnsupportedTopicException extends \RuntimeException
     public function __construct(
         KafkaTopic $topic,
         MessageType $messageType,
-    )
-    {
+    ) {
         parent::__construct(
-            sprintf(self::EXCEPTION_MESSAGE, $topic, $messageType),
+            \sprintf(self::EXCEPTION_MESSAGE, $topic->name, $messageType->name),
         );
     }
 }

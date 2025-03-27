@@ -1,8 +1,9 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Rossel\RosselKafkaPhpKit\Model;
 
-use Ramsey\Uuid\Uuid;
 use Rossel\RosselKafkaPhpKit\Enum\MessageHeaders\Area;
 use Rossel\RosselKafkaPhpKit\Enum\MessageHeaders\MessageType;
 
