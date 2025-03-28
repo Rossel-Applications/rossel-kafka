@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Rossel\RosselKafkaPhpKit;
 
+use Rossel\RosselKafkaPhpKit\DependencyInjection\RosselKafkaPhpKitExtension;
 use Rossel\RosselKafkaPhpKit\Enum\Config\RootConfigKeys;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
+use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
 
 final class RosselKafkaPhpKitBundle extends AbstractBundle
@@ -24,11 +26,16 @@ final class RosselKafkaPhpKitBundle extends AbstractBundle
                 ->end()
             ->integerNode(RootConfigKeys::PORT->value)
                 ->defaultValue(self::DEFAULT_PORT)
-                ->cannotBeEmpty()
                 ->min(1)
                 ->max(65535)
                 ->info(\sprintf('The port number to connect to (default: %s).', self::DEFAULT_PORT))
                 ->end()
             ->end();
+    }
+
+    public function build(ContainerBuilder $container): void
+    {
+        parent::build($container);
+        $container->registerExtension(new RosselKafkaPhpKitExtension());
     }
 }

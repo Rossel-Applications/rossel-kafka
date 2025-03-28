@@ -11,8 +11,10 @@ use Enqueue\RdKafka\RdKafkaTopic;
 use Interop\Queue\Exception;
 use Interop\Queue\Exception\InvalidDestinationException;
 use Interop\Queue\Exception\InvalidMessageException;
+use Rossel\RosselKafkaPhpKit\Dto\KafkaConfigInterface;
 use Rossel\RosselKafkaPhpKit\Enum\Infrastructure\KafkaTopic;
 use Rossel\RosselKafkaPhpKit\Model\MessageInterface;
+use Rossel\RosselKafkaPhpKit\Serializer\YamlConfigurationDeserializer;
 
 final class KafkaConnector implements KafkaConnectorInterface
 {
@@ -23,12 +25,18 @@ final class KafkaConnector implements KafkaConnectorInterface
     /** @var \SplObjectStorage<KafkaTopic, RdKafkaTopic> */
     private \SplObjectStorage $topics;
 
+    private KafkaConfigInterface $config;
+
     public function __construct(
-        string $host,
-        int $port,
+        private readonly YamlConfigurationDeserializer $yamlDeserializer,
+        string $kafkaConfigFilePath
     ) {
+        $this->config = $this->yamlDeserializer->parseConfigurationFile($kafkaConfigFilePath);
         $this->topics = new \SplObjectStorage();
-        $this->rdKafkaContext = $this->buildContext($host, $port);
+        $this->rdKafkaContext = $this->buildContext(
+            $this->config->getAddress(),
+            $this->config->getPort()
+        );
         $this->rdKafkaProducer = $this->rdKafkaContext->createProducer();
     }
 
