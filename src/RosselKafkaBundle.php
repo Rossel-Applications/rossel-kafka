@@ -8,7 +8,7 @@ use Rossel\RosselKafka\Enum\Config\RootConfigKeys;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
 use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
 
-final class RosselKafkaPhpKitBundle extends AbstractBundle
+final class RosselKafkaBundle extends AbstractBundle
 {
     private const DEFAULT_PORT = 9092;
 
