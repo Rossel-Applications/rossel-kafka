@@ -23,11 +23,11 @@ rossel_kafka:
 #### Without Symfony Dependency Injection
 
 ```php
-use Rossel\RosselKafkaPhpKit\Service\Connector\KafkaConnector;
-use Rossel\RosselKafkaPhpKit\Enum\Infrastructure\KafkaTopic;
-use Rossel\RosselKafkaPhpKit\Model\Message;
-use Rossel\RosselKafkaPhpKit\Model\MessageHeaders;
-use Rossel\RosselKafkaPhpKit\Enum\MessageHeaders\Area;
+use Rossel\RosselKafka\Service\Connector\KafkaConnector;
+use Rossel\RosselKafka\Enum\Infrastructure\KafkaTopic;
+use Rossel\RosselKafka\Model\Message;
+use Rossel\RosselKafka\Model\MessageHeaders;
+use Rossel\RosselKafka\Enum\MessageHeaders\Area;
 
 $kafkaConnector = new KafkaConnector(
     host: 'localhost',
@@ -35,10 +35,10 @@ $kafkaConnector = new KafkaConnector(
 );
 
 $message = new Message(
-    headers: new Rossel\RosselKafkaPhpKit\Model\MessageHeaders(
+    headers: new Rossel\RosselKafka\Model\MessageHeaders(
         area: Area::FRANCE,
         from: 'my-app',
-        messageType: \Rossel\RosselKafkaPhpKit\Enum\MessageHeaders\MessageType::SYNC_B2C_ERP_SUBSCRIPTION,
+        messageType: \Rossel\RosselKafka\Enum\MessageHeaders\MessageType::SYNC_B2C_ERP_SUBSCRIPTION,
     ),
     body: [
         'foo' => 'bar',

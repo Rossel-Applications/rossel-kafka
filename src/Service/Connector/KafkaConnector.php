@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Rossel\RosselKafkaPhpKit\Service\Connector;
+namespace Rossel\RosselKafka\Service\Connector;
 
 use Enqueue\RdKafka\RdKafkaConnectionFactory;
 use Enqueue\RdKafka\RdKafkaContext;
@@ -11,8 +11,8 @@ use Enqueue\RdKafka\RdKafkaTopic;
 use Interop\Queue\Exception;
 use Interop\Queue\Exception\InvalidDestinationException;
 use Interop\Queue\Exception\InvalidMessageException;
-use Rossel\RosselKafkaPhpKit\Enum\Infrastructure\KafkaTopic;
-use Rossel\RosselKafkaPhpKit\Model\MessageInterface;
+use Rossel\RosselKafka\Enum\Infrastructure\KafkaTopic;
+use Rossel\RosselKafka\Model\MessageInterface;
 
 final class KafkaConnector implements KafkaConnectorInterface
 {

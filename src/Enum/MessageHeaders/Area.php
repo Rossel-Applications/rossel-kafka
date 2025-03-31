@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Rossel\RosselKafkaPhpKit\Enum\MessageHeaders;
+namespace Rossel\RosselKafka\Enum\MessageHeaders;
 
 enum Area: string
 {

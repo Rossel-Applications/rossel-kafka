@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Rossel\RosselKafkaPhpKit\Model;
+namespace Rossel\RosselKafka\Model;
 
 use Enqueue\RdKafka\RdKafkaMessage;
-use Rossel\RosselKafkaPhpKit\Enum\MessageHeaders\MessageType;
+use Rossel\RosselKafka\Enum\MessageHeaders\MessageType;
 
 /**
  * Representation of a Kafka message, wrapping RdKafkaMessage class.
@@ -35,30 +35,6 @@ final readonly class Message implements MessageInterface
     /**
      * {@inheritDoc}
      */
-    public function getHeaders(): MessageHeadersInterface
-    {
-        return $this->headers;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function getBody(): array
-    {
-        return $this->body;
-    }
-
-    /**
-     * @throws \JsonException
-     */
-    public function getJsonBody(): string
-    {
-        return json_encode($this->body, \JSON_THROW_ON_ERROR);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
     public function getType(): MessageType
     {
         return $this->headers->getMessageType();
@@ -67,5 +43,13 @@ final readonly class Message implements MessageInterface
     public function getRdKafkaMessage(): RdKafkaMessage
     {
         return $this->rdKafkaMessage;
+    }
+
+    /**
+     * @throws \JsonException
+     */
+    private function getJsonBody(): string
+    {
+        return json_encode($this->body, \JSON_THROW_ON_ERROR);
     }
 }

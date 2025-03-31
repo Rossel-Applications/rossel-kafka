@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Rossel\RosselKafkaPhpKit\Service\Consumer;
+namespace Rossel\RosselKafka\Service\Consumer;
 
-use Rossel\RosselKafkaPhpKit\Model\MessageInterface;
+use Rossel\RosselKafka\Model\MessageInterface;
 
 interface MessageConsumerInterface
 {

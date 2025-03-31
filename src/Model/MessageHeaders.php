@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Rossel\RosselKafkaPhpKit\Model;
+namespace Rossel\RosselKafka\Model;
 
 use Ramsey\Uuid\Uuid;
-use Rossel\RosselKafkaPhpKit\Enum\MessageHeaders\Area;
-use Rossel\RosselKafkaPhpKit\Enum\MessageHeaders\MessageType;
+use Rossel\RosselKafka\Enum\MessageHeaders\Area;
+use Rossel\RosselKafka\Enum\MessageHeaders\MessageType;
 
 final readonly class MessageHeaders implements MessageHeadersInterface
 {
@@ -50,7 +50,25 @@ final readonly class MessageHeaders implements MessageHeadersInterface
         private string $version = self::DEFAULT_VERSION,
     ) {
         $this->dateTime = $dateTime ?? new \DateTimeImmutable();
-        $this->trackId = $trackId ?? (string) Uuid::uuid4();
+        $this->trackId = $trackId ?? $this->generateTrackId();
+    }
+
+    /**
+     * @return array<string, scalar>
+     */
+    public function toArray(): array
+    {
+        return [
+            self::KEY_AREA => $this->getArea()->value,
+            self::KEY_DATE_TIME => $this->getDateTime()->format(\DateTimeInterface::ATOM),
+            self::KEY_DATE_TIME_ORIGINAL => $this->getDateTimeOriginal()->format(\DateTimeInterface::ATOM),
+            self::KEY_FROM => $this->getFrom(),
+            self::KEY_FROM_ORIGINAL => $this->getFromOriginal(),
+            self::KEY_MESSAGE_TYPE => $this->getMessageType()->name,
+            self::KEY_TRACK_ID => $this->getTrackId(),
+            self::KEY_TRACK_ID_ORIGINAL => $this->getTrackIdOriginal(),
+            self::KEY_VERSION => $this->getVersion(),
+        ];
     }
 
     public function getArea(): Area
@@ -98,21 +116,8 @@ final readonly class MessageHeaders implements MessageHeadersInterface
         return $this->version;
     }
 
-    /**
-     * @return array<string, scalar>
-     */
-    public function toArray(): array
+    private function generateTrackId(): string
     {
-        return [
-            self::KEY_AREA => $this->getArea()->value,
-            self::KEY_DATE_TIME => $this->getDateTime()->format(\DateTimeInterface::ATOM),
-            self::KEY_DATE_TIME_ORIGINAL => $this->getDateTimeOriginal()->format(\DateTimeInterface::ATOM),
-            self::KEY_FROM => $this->getFrom(),
-            self::KEY_FROM_ORIGINAL => $this->getFromOriginal(),
-            self::KEY_MESSAGE_TYPE => $this->getMessageType()->name,
-            self::KEY_TRACK_ID => $this->getTrackId(),
-            self::KEY_TRACK_ID_ORIGINAL => $this->getTrackIdOriginal(),
-            self::KEY_VERSION => $this->getVersion(),
-        ];
+        return (string) Uuid::uuid4();
     }
 }

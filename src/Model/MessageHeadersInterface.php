@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Rossel\RosselKafkaPhpKit\Model;
+namespace Rossel\RosselKafka\Model;
 
-use Rossel\RosselKafkaPhpKit\Enum\MessageHeaders\Area;
-use Rossel\RosselKafkaPhpKit\Enum\MessageHeaders\MessageType;
+use Rossel\RosselKafka\Enum\MessageHeaders\Area;
+use Rossel\RosselKafka\Enum\MessageHeaders\MessageType;
 
 interface MessageHeadersInterface
 {

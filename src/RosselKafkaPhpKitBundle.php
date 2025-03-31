@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Rossel\RosselKafkaPhpKit;
+namespace Rossel\RosselKafka;
 
-use Rossel\RosselKafkaPhpKit\Enum\Config\RootConfigKeys;
+use Rossel\RosselKafka\Enum\Config\RootConfigKeys;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
 use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
 

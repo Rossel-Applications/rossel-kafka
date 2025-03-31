@@ -1,10 +1,10 @@
 {
-    "name": "rossel/rossel-kafka-php-kit",
+    "name": "rossel/rossel-kafka",
     "description": "A ready-to-use PHP library for seamless communication with Rossel's Kafka infrastructure, handling both production and consumption of messages.",
     "type": "library",
     "autoload": {
         "psr-4": {
-            "Rossel\\RosselKafkaPhpKit\\": "src/"
+            "Rossel\\RosselKafka\\": "src/"
         }
     },
     "authors": [

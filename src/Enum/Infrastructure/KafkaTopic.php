@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Rossel\RosselKafkaPhpKit\Enum\Infrastructure;
+namespace Rossel\RosselKafka\Enum\Infrastructure;
 
 enum KafkaTopic
 {

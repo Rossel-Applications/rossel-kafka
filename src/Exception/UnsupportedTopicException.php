@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Rossel\RosselKafkaPhpKit\Exception;
+namespace Rossel\RosselKafka\Exception;
 
-use Rossel\RosselKafkaPhpKit\Enum\Infrastructure\KafkaTopic;
-use Rossel\RosselKafkaPhpKit\Enum\MessageHeaders\MessageType;
+use Rossel\RosselKafka\Enum\Infrastructure\KafkaTopic;
+use Rossel\RosselKafka\Enum\MessageHeaders\MessageType;
 
 final class UnsupportedTopicException extends \RuntimeException
 {

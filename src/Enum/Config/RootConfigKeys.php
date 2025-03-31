@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Rossel\RosselKafkaPhpKit\Enum\Config;
+namespace Rossel\RosselKafka\Enum\Config;
 
 enum RootConfigKeys: string
 {
