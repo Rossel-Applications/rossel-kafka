@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/rossel-kafka-php-kit.iml" filepath="$PROJECT_DIR$/.idea/rossel-kafka-php-kit.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/rossel-kafka.iml" filepath="$PROJECT_DIR$/.idea/rossel-kafka.iml" />
     </modules>
   </component>
 </project>

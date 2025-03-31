@@ -1,5 +1,5 @@
 networks:
-  rossel-kafka-php-kit.network:
+  rossel-kafka.network:
     driver: bridge
 
 services:
@@ -11,7 +11,7 @@ services:
     volumes:
       - .:/var/www/app.dev
     networks:
-      - rossel-kafka-php-kit.network
+      - rossel-kafka.network
     tty: true
     ports:
       - "9096:9000"
@@ -28,7 +28,7 @@ services:
     ports:
       - ${BROKER_PORT}:9092
     networks:
-      - rossel-kafka-php-kit.network
+      - rossel-kafka.network
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,CONTROLLER:PLAINTEXT

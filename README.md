@@ -1,11 +1,11 @@
-# Rossel Kafka PHP kit
+# Rossel Kafka
 
 A ready-to-use PHP library for seamless communication with Rossel's Kafka infrastructure, handling both production and consumption of messages.
 
 ## Installation
 
 ```shell
-composer require rossel/rossel-kafka-php-kit
+composer require rossel/rossel-kafka
 ```
 
 ## Configuration
