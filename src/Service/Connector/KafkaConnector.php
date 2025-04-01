@@ -12,6 +12,7 @@ use Interop\Queue\Exception;
 use Interop\Queue\Exception\InvalidDestinationException;
 use Interop\Queue\Exception\InvalidMessageException;
 use Rossel\RosselKafka\Enum\Infrastructure\KafkaTopic;
+use Rossel\RosselKafka\Exception\InvalidPortException;
 use Rossel\RosselKafka\Model\MessageInterface;
 
 final class KafkaConnector implements KafkaConnectorInterface
@@ -25,8 +26,10 @@ final class KafkaConnector implements KafkaConnectorInterface
 
     public function __construct(
         string $host,
-        int $port,
+        int|string $port,
     ) {
+        $port = $this->formatPort($port);
+
         $this->topics = new \SplObjectStorage();
         $this->rdKafkaContext = $this->buildContext($host, $port);
         $this->rdKafkaProducer = $this->rdKafkaContext->createProducer();
@@ -96,5 +99,20 @@ final class KafkaConnector implements KafkaConnectorInterface
                 'auto.offset.reset' => 'beginning',
             ],
         ]);
+    }
+
+    private function formatPort(int|string $port): int
+    {
+        if (\is_string($port) && !filter_var($port, \FILTER_VALIDATE_INT)) {
+            throw new InvalidPortException($port);
+        }
+
+        $port = (int) $port;
+
+        if ($port < 0 || $port > 65535) {
+            throw new InvalidPortException($port);
+        }
+
+        return $port;
     }
 }

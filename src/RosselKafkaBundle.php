@@ -4,30 +4,16 @@ declare(strict_types=1);
 
 namespace Rossel\RosselKafka;
 
-use Rossel\RosselKafka\Enum\Config\RootConfigKeys;
-use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
+use Rossel\RosselKafka\DependencyInjection\RosselKafkaExtension;
+use Symfony\Component\DependencyInjection\Extension\ExtensionInterface;
 use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
 
 final class RosselKafkaBundle extends AbstractBundle
 {
-    private const DEFAULT_PORT = 9092;
+    public const BUNDLE_NAME = 'rossel_kafka';
 
-    public function configure(DefinitionConfigurator $definition): void
+    public function getContainerExtension(): ?ExtensionInterface
     {
-        /* @phpstan-ignore method.notFound */
-        $definition->rootNode()
-            ->children()
-                ->scalarNode(RootConfigKeys::HOST->value)
-                ->isRequired()
-                ->cannotBeEmpty()
-                ->info('The IP address or hostname to connect to.')
-                ->end()
-            ->integerNode(RootConfigKeys::PORT->value)
-                ->defaultValue(self::DEFAULT_PORT)
-                ->min(1)
-                ->max(65535)
-                ->info(\sprintf('The port number to connect to (default: %s).', self::DEFAULT_PORT))
-                ->end()
-            ->end();
+        return new RosselKafkaExtension();
     }
 }

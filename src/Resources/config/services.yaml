@@ -1,0 +1,20 @@
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+    public: false
+
+  Rossel\RosselKafka\:
+    resource: '../../'
+    exclude:
+      - '../src/DependencyInjection/'
+      - '../src/Enum'
+      - '../src/Exception'
+      - '../src/Model'
+      - '../src/Resources/'
+      - '../src/RosselKafkaBundle.php'
+
+  Rossel\RosselKafka\Service\Connector\KafkaConnector:
+    arguments:
+      $host: '%rossel_kafka.host%'
+      $port: '%rossel_kafka.port%'

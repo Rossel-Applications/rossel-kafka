@@ -1,0 +1,19 @@
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+    public: false
+
+  Rossel\RosselKafkaPhpKit\:
+    resource: '../src/'
+    exclude:
+      - '../src/DependencyInjection/'
+      - '../src/Entity/'
+      - '../src/Model/'
+      - '../src/Enum/'
+      - '../src/Exception/'
+      - '../src/RosselKafkaPhpKitBundle.php'
+
+  Rossel\RosselKafkaPhpKit\Service\Connector\KafkaConnector:
+    arguments:
+      $kafkaConfigFilePath: '%kernel.project_dir%/config/packages/rossel_kafka.yaml'
