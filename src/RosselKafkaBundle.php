@@ -12,7 +12,7 @@ final class RosselKafkaBundle extends AbstractBundle
 {
     public const BUNDLE_NAME = 'rossel_kafka';
 
-    public function getContainerExtension(): ?ExtensionInterface
+    public function getContainerExtension(): ExtensionInterface
     {
         return new RosselKafkaExtension();
     }

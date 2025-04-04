@@ -16,5 +16,4 @@ services:
 
   Rossel\RosselKafka\Service\Connector\KafkaConnector:
     arguments:
-      $host: '%rossel_kafka.host%'
-      $port: '%rossel_kafka.port%'
+      $brokerUrl: '%rossel_kafka.broker_url%'

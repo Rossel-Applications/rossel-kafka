@@ -12,7 +12,6 @@ use Interop\Queue\Exception;
 use Interop\Queue\Exception\InvalidDestinationException;
 use Interop\Queue\Exception\InvalidMessageException;
 use Rossel\RosselKafka\Enum\Infrastructure\KafkaTopic;
-use Rossel\RosselKafka\Exception\InvalidPortException;
 use Rossel\RosselKafka\Model\MessageInterface;
 
 final class KafkaConnector implements KafkaConnectorInterface
@@ -25,13 +24,10 @@ final class KafkaConnector implements KafkaConnectorInterface
     private \SplObjectStorage $topics;
 
     public function __construct(
-        string $host,
-        int|string $port,
+        string $brokerUrl,
     ) {
-        $port = $this->formatPort($port);
-
         $this->topics = new \SplObjectStorage();
-        $this->rdKafkaContext = $this->buildContext($host, $port);
+        $this->rdKafkaContext = $this->buildContext($brokerUrl);
         $this->rdKafkaProducer = $this->rdKafkaContext->createProducer();
     }
 
@@ -71,9 +67,9 @@ final class KafkaConnector implements KafkaConnectorInterface
     /**
      * Build the RdKafkaContext and initialize topics.
      */
-    private function buildContext(string $host, int $port): RdKafkaContext
+    private function buildContext(string $brokerUrl): RdKafkaContext
     {
-        $context = $this->buildConnectionFactory($host, $port)->createContext();
+        $context = $this->buildConnectionFactory($brokerUrl)->createContext();
 
         foreach (KafkaTopic::cases() as $topic) {
             if (!$this->topics->contains($topic)) {
@@ -85,34 +81,21 @@ final class KafkaConnector implements KafkaConnectorInterface
     }
 
     /**
-     * Build the RdKafkaConnectionFactory with the given host and port.
+     * Build the RdKafkaConnectionFactory with the given broker url.
      */
-    private function buildConnectionFactory(string $host, int $port): RdKafkaConnectionFactory
+    private function buildConnectionFactory(string $brokerUrl): RdKafkaConnectionFactory
     {
+        $brokerUrl = str_replace('kafka://', '', $brokerUrl);
+
         return new RdKafkaConnectionFactory([
             'global' => [
                 'group.id' => uniqid('', true),
-                'metadata.broker.list' => \sprintf('%s:%s', $host, $port),
+                'metadata.broker.list' => $brokerUrl,
                 'enable.auto.commit' => 'false',
             ],
             'topic' => [
                 'auto.offset.reset' => 'beginning',
             ],
         ]);
-    }
-
-    private function formatPort(int|string $port): int
-    {
-        if (\is_string($port) && !filter_var($port, \FILTER_VALIDATE_INT)) {
-            throw new InvalidPortException($port);
-        }
-
-        $port = (int) $port;
-
-        if ($port < 0 || $port > 65535) {
-            throw new InvalidPortException($port);
-        }
-
-        return $port;
     }
 }

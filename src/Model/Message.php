@@ -27,8 +27,8 @@ final readonly class Message implements MessageInterface
         private array $body,
     ) {
         $this->rdKafkaMessage = new RdKafkaMessage(
-            $this->getJsonBody(),
-            $this->headers->toArray(),
+            body: $this->getJsonBody(),
+            headers: $this->headers->toArray(),
         );
     }
 

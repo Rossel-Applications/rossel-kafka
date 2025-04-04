@@ -10,11 +10,16 @@ composer require rossel/rossel-kafka
 
 ## Configuration
 
+### Bundle configuration
+
 ```yaml
 rossel_kafka:
-  address: %env(KAFKA_BROKER_ADDRESS)%
-  port: %env(KAFKA_BROKER_PORT)%
+  broker_url: %env(KAFKA_BROKER_URL)%
 ```
+
+### Broker configuration (docker)
+
+// WIP
 
 ## Usage
 
@@ -30,8 +35,7 @@ use Rossel\RosselKafka\Model\MessageHeaders;
 use Rossel\RosselKafka\Enum\MessageHeaders\Area;
 
 $kafkaConnector = new KafkaConnector(
-    host: 'localhost',
-    port: 9092,
+    brokerUrl: 'localhost:9092',
 );
 
 $message = new Message(

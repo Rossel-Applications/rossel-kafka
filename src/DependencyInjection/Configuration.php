@@ -11,8 +11,6 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
 
 class Configuration implements ConfigurationInterface
 {
-    private const DEFAULT_PORT = 9092;
-
     public function getConfigTreeBuilder(): TreeBuilder
     {
         $treeBuilder = new TreeBuilder(RosselKafkaBundle::BUNDLE_NAME);
@@ -21,14 +19,10 @@ class Configuration implements ConfigurationInterface
 
         $rootNode
             ->children()
-            ->scalarNode(RootConfigKeys::HOST->value)
+            ->scalarNode(RootConfigKeys::BROKER_URL->value)
                 ->isRequired()
                 ->cannotBeEmpty()
-                ->info('The IP address or hostname to connect to.')
-                ->end()
-            ->scalarNode(RootConfigKeys::PORT->value)
-                ->defaultValue(self::DEFAULT_PORT)
-                ->info(\sprintf('The port number to connect to (default: %s).', self::DEFAULT_PORT))
+                ->info('The broker url (containing host and port).')
                 ->end()
             ->end();
 

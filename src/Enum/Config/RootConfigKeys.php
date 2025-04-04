@@ -6,6 +6,5 @@ namespace Rossel\RosselKafka\Enum\Config;
 
 enum RootConfigKeys: string
 {
-    case HOST = 'host';
-    case PORT = 'port';
+    case BROKER_URL = 'broker_url';
 }
