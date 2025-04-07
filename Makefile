@@ -80,8 +80,10 @@ qa: phpstan cs code_coverage
 
 phpunit: ## Execute unit tests.
 	$(PHPUNIT) tests/
-code_coverage: ## Execute unit tests.
-	XDEBUG_MODE=coverage $(PHPUNIT) tests/ --coverage-text
+
+coverage: ## Generate an HTML code coverage report with PHPUnit
+	@$(DOCKER_COMP) exec -e XDEBUG_MODE=coverage php ./vendor/bin/phpunit --coverage-html build/coverage
+	@echo "✅ Code coverage report generated in build/coverage/"
 
 ## —— Symfony 🎵 ———————————————————————————————————————————————————————————————
 sf: ## List all Symfony commands or pass the parameter "c=" to run a given command, example: make sf c=about
