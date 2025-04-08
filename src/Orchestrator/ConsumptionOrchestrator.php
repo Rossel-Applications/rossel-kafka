@@ -3,6 +3,7 @@
 namespace Rossel\RosselKafka\Orchestrator;
 
 use Rossel\RosselKafka\Consumer\ConsumerInterface;
+use Rossel\RosselKafka\Enum\Infrastructure\KafkaTopic;
 use Rossel\RosselKafka\Service\Connector\KafkaConnector;
 
 class ConsumptionOrchestrator
@@ -19,9 +20,14 @@ class ConsumptionOrchestrator
     }
 
     public function listen(
-        // callbacks
+        KafkaTopic $topic,
+        ?callable $onStartCallable = null,
     ): void
     {
+        if (null !== $onStartCallable) {
+            $onStartCallable($topic);
+        }
+
         //while (true) {
 
         //}
