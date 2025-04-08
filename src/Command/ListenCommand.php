@@ -2,6 +2,7 @@
 
 namespace Rossel\RosselKafka\Command;
 
+use Rossel\RosselKafka\Enum\Infrastructure\KafkaTopic;
 use Rossel\RosselKafka\Orchestrator\ConsumptionOrchestrator;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -25,18 +26,37 @@ final class ListenCommand extends Command
         $this->addOption(
             name: 'topics',
             shortcut: 't',
-            mode: InputOption::VALUE_IS_ARRAY,
-            description: 'Topics to listen to'
+            mode: InputOption::VALUE_OPTIONAL,
+            description: 'Topics to listen to (separated by comma)',
         );
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $topics = $input->getOption('topics');
-        dd($topics);
+        $topicsInput = $input->getOption('topics');
 
-        $this->consumptionOrchestrator->listen();
+        $topics = $this->extractTopicsFromString($topicsInput);
+
+        //$this->consumptionOrchestrator->listen();
 
         return Command::SUCCESS;
+    }
+
+    /**
+     * @return array<array-key, KafkaTopic>
+     */
+    private function extractTopicsFromString(?string $topics): array
+    {
+        if (null === $topics || '' === str_replace([',', ' '], '', $topics)) {
+            return KafkaTopic::cases();
+        }
+
+        $results = [];
+
+        foreach (explode(',', $topics) as $topicString) {
+            $results = KafkaTopic::case(trim($topicString));
+        }
+
+        return $results;
     }
 }
