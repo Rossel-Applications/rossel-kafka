@@ -7,18 +7,9 @@ use Rossel\RosselKafka\Enum\MessageHeaders\MessageType;
 
 interface ConsumerInterface
 {
-    public const CONSUME_SUCCESS = false;
-    public const CONSUME_ERROR = true;
+    public function supportsTopic(KafkaTopic $topic): bool;
 
-    /**
-     * @return array<array-key, KafkaTopic>
-     */
-    public function getSubscribedTopics(): array;
+    public function supportsMessageType(MessageType $messageType): bool;
 
-    /**
-     * @return array<array-key, MessageType>
-     */
-    public function getSubscribedMessageTypes(): array;
-
-    public function consume(): bool;
+    public function __invoke();
 }

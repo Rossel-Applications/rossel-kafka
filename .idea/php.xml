@@ -83,6 +83,7 @@
       <path value="$PROJECT_DIR$/tools/php-cs-fixer/vendor/symfony/finder" />
       <path value="$PROJECT_DIR$/tools/php-cs-fixer/vendor/symfony/stopwatch" />
       <path value="$PROJECT_DIR$/vendor/enqueue/rdkafka" />
+      <path value="$PROJECT_DIR$/vendor/symfony/process" />
     </include_path>
   </component>
   <component name="PhpProjectSharedConfiguration" php_language_level="8.2" />
