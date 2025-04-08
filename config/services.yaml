@@ -4,7 +4,7 @@ services:
     autoconfigure: true
     public: false
 
-  Rossel\RosselKafkaPhpKit\:
+  Rossel\RosselKafka\:
     resource: '../src/'
     exclude:
       - '../src/DependencyInjection/'
@@ -14,6 +14,9 @@ services:
       - '../src/Exception/'
       - '../src/RosselKafkaPhpKitBundle.php'
 
-  Rossel\RosselKafkaPhpKit\Service\Connector\KafkaConnector:
-    arguments:
-      $kafkaConfigFilePath: '%kernel.project_dir%/config/packages/rossel_kafka.yaml'
+  _instanceof:
+    Rossel\RosselKafka\Consumption\Consumer\ConsumerInterface:
+      tags: ['rossel_kafka.consumer']
+
+  Rossel\RosselKafka\Consumption\Manager\ConsumptionManager:
+    $consumers: !tagged_iterator 'rossel_kafka.consumer'
