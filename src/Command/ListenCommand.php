@@ -54,7 +54,7 @@ final class ListenCommand extends Command
         $results = [];
 
         foreach (explode(',', $topics) as $topicString) {
-            $results = KafkaTopic::case(trim($topicString));
+            $results[] = KafkaTopic::case(trim($topicString));
         }
 
         return $results;
