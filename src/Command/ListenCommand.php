@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Rossel\RosselKafka\Command;
 
 use Psr\Log\LoggerInterface;
@@ -26,14 +28,13 @@ final class ListenCommand extends Command
     public function __construct(
         private ConsumptionOrchestrator $consumptionOrchestrator,
         private LoggerInterface $logger,
-    )
-    {
+    ) {
         parent::__construct(
             name: self::COMMAND_NAME,
         );
     }
 
-    protected function configure()
+    protected function configure(): void
     {
         $this->setDescription(self::COMMAND_DESCRIPTION);
         $this->addOption(
@@ -64,20 +65,21 @@ final class ListenCommand extends Command
             try {
                 $this->consumptionOrchestrator->listen(
                     topic: $topics[0],
-                    onStartCallable: [self::class, 'onStartCallable'],
+                    onStartCallable: self::onStart(...),
                 );
 
                 return Command::SUCCESS;
-            }
-            catch (\Exception $e) {
+            } catch (\Exception $e) {
                 $this->logger->error($e->getMessage());
 
                 return Command::FAILURE;
             }
         }
 
+        $processes = [];
+
         foreach ($topics as $topic) {
-            $process = new Process(['php', 'bin/console', self::COMMAND_NAME, sprintf('--%s=%s', self::COMMAND_OPTION_TOPIC_NAME, $topic->name)]);
+            $processes[] = $process = new Process(['php', 'bin/console', self::COMMAND_NAME, \sprintf('--%s=%s', self::COMMAND_OPTION_TOPIC_NAME, $topic->name)]);
             $process->start();
         }
 
@@ -108,6 +110,6 @@ final class ListenCommand extends Command
             return;
         }
 
-        $io->info(sprintf("Starting listening on %s...", $topic->name));
+        $io->info(\sprintf('Starting listening on %s...', $topic->name));
     }
 }

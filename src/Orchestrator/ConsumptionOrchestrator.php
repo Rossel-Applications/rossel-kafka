@@ -1,8 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Rossel\RosselKafka\Orchestrator;
 
-use Rossel\RosselKafka\Consumer\ConsumerInterface;
+use Psr\Log\LoggerInterface;
 use Rossel\RosselKafka\Enum\Infrastructure\KafkaTopic;
 use Rossel\RosselKafka\Service\Connector\KafkaConnector;
 
@@ -10,33 +12,32 @@ class ConsumptionOrchestrator
 {
     // private array $consumers = [];
 
-    /**
-     * @param iterable<ConsumerInterface> $consumers
-     */
     public function __construct(
-        //readonly iterable $consumers,
-        //private KafkaConnector $kafkaConnector,
+        private readonly LoggerInterface $logger,
+        // readonly iterable $consumers,
+        // private KafkaConnector $kafkaConnector,
     ) {
     }
 
     public function listen(
         KafkaTopic $topic,
-        ?callable $onStartCallable = null,
-    ): void
-    {
+        ?\Closure $onStartCallable = null,
+    ): void {
         if (null !== $onStartCallable) {
             $onStartCallable($topic);
         }
 
-        //while (true) {
+        $this->logger->info(\sprintf('Listening on topic %s started.', $topic->name));
 
-        //}
+        // while (true) {
+
+        // }
     }
 
     private function defineConsumers(): void
     {
-        //foreach ($this->consumers as $consumer) {
+        // foreach ($this->consumers as $consumer) {
 
-        //}
+        // }
     }
 }
