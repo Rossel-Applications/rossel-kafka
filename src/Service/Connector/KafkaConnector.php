@@ -14,7 +14,7 @@ use Interop\Queue\Exception\InvalidMessageException;
 use Rossel\RosselKafka\Enum\Infrastructure\KafkaTopic;
 use Rossel\RosselKafka\Model\MessageInterface;
 
-final class KafkaConnector implements KafkaConnectorInterface
+class KafkaConnector implements KafkaConnectorInterface
 {
     private readonly RdKafkaContext $rdKafkaContext;
 
