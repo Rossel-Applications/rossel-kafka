@@ -55,7 +55,7 @@ class KafkaConnector implements KafkaConnectorInterface
      *
      * @throws \InvalidArgumentException if the topic is not registered
      */
-    private function getRdKafkaTopic(KafkaTopic $topic): RdKafkaTopic
+    public function getRdKafkaTopic(KafkaTopic $topic): RdKafkaTopic
     {
         if (!$this->topics->contains($topic)) {
             throw new \InvalidArgumentException(\sprintf('Topic "%s" is not registered in the KafkaConnector.', $topic->name));

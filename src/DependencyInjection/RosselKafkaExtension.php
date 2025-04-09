@@ -64,7 +64,7 @@ final class RosselKafkaExtension extends Extension implements PrependExtensionIn
         }
 
         $baseConfig['default']['transport'] = $brokerUrl;
-        $baseConfig['default']['client'] = '~';
+        $baseConfig['default']['client'] = null;
 
         $container->prependExtensionConfig('enqueue', $baseConfig);
     }
