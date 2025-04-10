@@ -26,8 +26,8 @@ final class ListenCommand extends Command
     private ?SymfonyStyle $io = null;
 
     public function __construct(
-        private ConsumptionOrchestrator $consumptionOrchestrator,
-        private LoggerInterface $logger,
+        private readonly ConsumptionOrchestrator $consumptionOrchestrator,
+        private readonly LoggerInterface $logger,
     ) {
         parent::__construct(
             name: self::COMMAND_NAME,
@@ -79,9 +79,32 @@ final class ListenCommand extends Command
         $processes = [];
 
         foreach ($topics as $topic) {
-            $processes[] = $process = new Process(['php', 'bin/console', self::COMMAND_NAME, \sprintf('--%s=%s', self::COMMAND_OPTION_TOPIC_NAME, $topic->name)]);
+            $process = new Process([
+                'php',
+                'bin/console',
+                self::COMMAND_NAME,
+                \sprintf('--%s=%s', self::COMMAND_OPTION_TOPIC_NAME, $topic->name),
+            ]);
+
             $process->start();
+            $processes[] = $process;
         }
+
+        do {
+            foreach ($processes as $key => $process) {
+                if ($process->isRunning()) {
+                    echo $process->getIncrementalOutput();
+                    echo $process->getIncrementalErrorOutput();
+                } else {
+                    echo $process->getIncrementalOutput();
+                    echo $process->getIncrementalErrorOutput();
+
+                    unset($processes[$key]);
+                }
+            }
+
+            usleep(100000); // 100 ms
+        } while (!empty($processes));
 
         return Command::SUCCESS;
     }
