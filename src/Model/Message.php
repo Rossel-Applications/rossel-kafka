@@ -10,7 +10,7 @@ use Rossel\RosselKafka\Enum\MessageHeaders\MessageType;
 /**
  * Representation of a Kafka message, wrapping RdKafkaMessage class.
  */
-final readonly class Message implements MessageInterface
+readonly class Message implements MessageInterface
 {
     private RdKafkaMessage $rdKafkaMessage;
 

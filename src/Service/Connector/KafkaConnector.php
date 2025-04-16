@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Rossel\RosselKafka\Service\Connector;
 
 use Enqueue\RdKafka\RdKafkaConnectionFactory;
+use Enqueue\RdKafka\RdKafkaConsumer;
 use Enqueue\RdKafka\RdKafkaContext;
 use Enqueue\RdKafka\RdKafkaProducer;
 use Enqueue\RdKafka\RdKafkaTopic;
@@ -51,11 +52,21 @@ final class KafkaConnector implements KafkaConnectorInterface
     }
 
     /**
+     * Create a consumer object, which is responsible for listening messages published on a topic.
+     */
+    public function createConsumer(KafkaTopic $kafkaTopic): RdKafkaConsumer
+    {
+        $rdKafkaTopic = $this->getRdKafkaTopic($kafkaTopic);
+
+        return $this->rdKafkaContext->createConsumer($rdKafkaTopic);
+    }
+
+    /**
      * Get the RdKafkaTopic associated with a KafkaTopic enum.
      *
      * @throws \InvalidArgumentException if the topic is not registered
      */
-    public function getRdKafkaTopic(KafkaTopic $topic): RdKafkaTopic
+    private function getRdKafkaTopic(KafkaTopic $topic): RdKafkaTopic
     {
         if (!$this->topics->contains($topic)) {
             throw new \InvalidArgumentException(\sprintf('Topic "%s" is not registered in the KafkaConnector.', $topic->name));

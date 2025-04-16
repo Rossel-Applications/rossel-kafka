@@ -12,15 +12,15 @@ final readonly class MessageHeaders implements MessageHeadersInterface
 {
     public const DEFAULT_VERSION = '1';
 
-    private const KEY_AREA = 'area';
-    private const KEY_DATE_TIME = 'dateTime';
-    private const KEY_DATE_TIME_ORIGINAL = 'dateTimeOriginal';
-    private const KEY_FROM = 'from';
-    private const KEY_FROM_ORIGINAL = 'fromOriginal';
-    private const KEY_MESSAGE_TYPE = 'messageType';
-    private const KEY_TRACK_ID = 'trackId';
-    private const KEY_TRACK_ID_ORIGINAL = 'trackIdOriginal';
-    private const KEY_VERSION = 'version';
+    public const KEY_AREA = 'area';
+    public const KEY_DATE_TIME = 'dateTime';
+    public const KEY_DATE_TIME_ORIGINAL = 'dateTimeOriginal';
+    public const KEY_FROM = 'from';
+    public const KEY_FROM_ORIGINAL = 'fromOriginal';
+    public const KEY_MESSAGE_TYPE = 'messageType';
+    public const KEY_TRACK_ID = 'trackId';
+    public const KEY_TRACK_ID_ORIGINAL = 'trackIdOriginal';
+    public const KEY_VERSION = 'version';
 
     private \DateTimeImmutable $dateTime;
 
@@ -29,14 +29,15 @@ final readonly class MessageHeaders implements MessageHeadersInterface
     /**
      * Initializes the message with the provided headers.
      *
-     * @param Area                    $area             the functional area associated with the message
-     * @param string                  $from             the originating application of the message
-     * @param MessageType             $messageType      the message type
-     * @param string|null             $trackId          Optional unique identifier for tracking the message. If null, a new UUID will be generated.
-     * @param \DateTimeImmutable|null $dateTime         Optional timestamp for the message. If null, the current time is used.
-     * @param \DateTimeImmutable|null $dateTimeOriginal Optional original timestamp for the message. Defaults to the value of `$dateTime` if null.
-     * @param string|null             $fromOriginal     Optional identifier for the original application that issued the message. Defaults to `$from` if null.
-     * @param string|null             $trackIdOriginal  Optional identifier for the original track ID. Defaults to `$trackId` if null.
+     * @param Area                    $area              the functional area associated with the message
+     * @param string                  $from              the originating application of the message
+     * @param MessageType             $messageType       the message type
+     * @param string|null             $trackId           Optional unique identifier for tracking the message. If null, a new UUID will be generated.
+     * @param \DateTimeImmutable|null $dateTime          Optional timestamp for the message. If null, the current time is used.
+     * @param \DateTimeImmutable|null $dateTimeOriginal  Optional original timestamp for the message. Defaults to the value of `$dateTime` if null.
+     * @param string|null             $fromOriginal      Optional identifier for the original application that issued the message. Defaults to `$from` if null.
+     * @param string|null             $trackIdOriginal   Optional identifier for the original track ID. Defaults to `$trackId` if null.
+     * @param array<string, scalar>   $additionalHeaders array of additional headers
      */
     public function __construct(
         private Area $area,
@@ -48,6 +49,7 @@ final readonly class MessageHeaders implements MessageHeadersInterface
         private ?string $fromOriginal = null,
         private ?string $trackIdOriginal = null,
         private string $version = self::DEFAULT_VERSION,
+        private array $additionalHeaders = [],
     ) {
         $this->dateTime = $dateTime ?? new \DateTimeImmutable();
         $this->trackId = $trackId ?? $this->generateTrackId();
@@ -114,6 +116,14 @@ final readonly class MessageHeaders implements MessageHeadersInterface
     public function getVersion(): string
     {
         return $this->version;
+    }
+
+    /**
+     * @return array<string, scalar>
+     */
+    public function getAdditionalHeaders(): array
+    {
+        return $this->additionalHeaders;
     }
 
     private function generateTrackId(): string
