@@ -26,6 +26,7 @@ final class KafkaConnector implements KafkaConnectorInterface
 
     public function __construct(
         string $brokerUrl,
+        private string $appName,
     ) {
         $this->topics = new \SplObjectStorage();
         $this->rdKafkaContext = $this->buildContext($brokerUrl);
@@ -100,12 +101,21 @@ final class KafkaConnector implements KafkaConnectorInterface
 
         return new RdKafkaConnectionFactory([
             'global' => [
-                'group.id' => uniqid('', true),
+                'group.id' => $this->appName,
                 'metadata.broker.list' => $brokerUrl,
-                'enable.auto.commit' => 'false',
+                'enable.auto.commit' => 'true',
+                'auto.commit.interval.ms' => '5s',
+                'enable.idempotence' => 'true',
+                'retries' => '2147483647',
+                'linger.ms' => '100',
+                'batch.size' => '16384',
+                'fetch.min.bytes' => '1000',
             ],
             'topic' => [
-                'auto.offset.reset' => 'beginning',
+                'auto.offset.reset' => 'latest',
+                'request.required.acks' => 'all',
+                'delivery.timeout.ms' => '518400000', // 6 days
+                'compression.type' => 'gzip',
             ],
         ]);
     }

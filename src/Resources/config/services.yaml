@@ -4,16 +4,25 @@ services:
     autoconfigure: true
     public: false
 
+  _instanceof:
+    Rossel\RosselKafka\Consumer\ConsumerInterface:
+      tags: ['rossel_kafka.consumer']
+
   Rossel\RosselKafka\:
-    resource: '../../'
+    resource: '../../../src/'
     exclude:
-      - '../src/DependencyInjection/'
-      - '../src/Enum'
-      - '../src/Exception'
-      - '../src/Model'
-      - '../src/Resources/'
-      - '../src/RosselKafkaBundle.php'
+      - '../../../src/DependencyInjection/'
+      - '../../../src/Entity/'
+      - '../../../src/Model/'
+      - '../../../src/Enum/'
+      - '../../../src/Exception/'
+      - '../../../src/RosselKafkaPhpKitBundle.php'
 
   Rossel\RosselKafka\Service\Connector\KafkaConnector:
     arguments:
       $brokerUrl: '%rossel_kafka.broker_url%'
+      $appName: '%rossel_kafka.producer.app_name%'
+
+  Rossel\RosselKafka\Orchestrator\ConsumptionOrchestrator:
+    $consumers: !tagged_iterator 'rossel_kafka.consumer'
+    $appName: '%rossel_kafka.producer.app_name%'

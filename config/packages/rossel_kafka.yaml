@@ -1,2 +1,0 @@
-rossel_kafka:
-  broker_url: '%env(ROSSEL_KAFKA_BROKER_URL)%'

@@ -14,20 +14,28 @@ readonly class Message implements MessageInterface
 {
     private RdKafkaMessage $rdKafkaMessage;
 
+    private string $body;
+
     /**
      * Initializes the message with the provided headers and body.
      *
-     * @param MessageHeadersInterface $headers the message headers
-     * @param array<string, mixed>    $body    the message body
+     * @param MessageHeadersInterface     $headers the message headers
+     * @param array<string, mixed>|string $body    the message body
      *
      * @throws \JsonException
      */
     public function __construct(
         private MessageHeadersInterface $headers,
-        private array $body,
+        array|string $body,
     ) {
+        if (\is_array($body)) {
+            $body = json_encode($body, \JSON_THROW_ON_ERROR);
+        }
+
+        $this->body = $body;
+
         $this->rdKafkaMessage = new RdKafkaMessage(
-            body: $this->getJsonBody(),
+            body: $this->body,
             headers: $this->headers->toArray(),
         );
     }
@@ -45,11 +53,8 @@ readonly class Message implements MessageInterface
         return $this->rdKafkaMessage;
     }
 
-    /**
-     * @throws \JsonException
-     */
-    private function getJsonBody(): string
+    public function getBody(): string
     {
-        return json_encode($this->body, \JSON_THROW_ON_ERROR);
+        return $this->body;
     }
 }

@@ -6,6 +6,8 @@ namespace Rossel\RosselKafka\Factory;
 
 use Enqueue\RdKafka\RdKafkaMessage;
 use Psr\Log\LoggerInterface;
+use Rossel\RosselKafka\Enum\MessageHeaders\Area;
+use Rossel\RosselKafka\Enum\MessageHeaders\MessageType;
 use Rossel\RosselKafka\Model\Message;
 use Rossel\RosselKafka\Model\MessageHeaders;
 use Rossel\RosselKafka\Utils\ArrayUtils;
@@ -20,6 +22,7 @@ final readonly class MessageFactory
 
     /**
      * @throws \JsonException
+     * @throws \Exception
      */
     public function createMessageFromRdKafka(RdKafkaMessage $message): Message
     {
@@ -29,19 +32,28 @@ final readonly class MessageFactory
         );
     }
 
+    /**
+     * @throws \Exception
+     */
     private function createMessageHeadersFromRdKafka(RdKafkaMessage $message): MessageHeaders
     {
         $headers = $message->getHeaders();
 
         $this->validateMessageHeaders($headers);
 
+        /** @var ?string $dateTimeString */
+        $dateTimeString = ArrayUtils::pull($headers, MessageHeaders::KEY_DATE_TIME);
+
+        /** @var ?string $dateTimeOriginalString */
+        $dateTimeOriginalString = ArrayUtils::pull($headers, MessageHeaders::KEY_DATE_TIME_ORIGINAL);
+
         return new MessageHeaders(
-            area: ArrayUtils::pull($headers, MessageHeaders::KEY_AREA),
+            area: Area::from(ArrayUtils::pull($headers, MessageHeaders::KEY_AREA)),
             from: ArrayUtils::pull($headers, MessageHeaders::KEY_FROM),
-            messageType: ArrayUtils::pull($headers, MessageHeaders::KEY_MESSAGE_TYPE),
+            messageType: MessageType::from(ArrayUtils::pull($headers, MessageHeaders::KEY_MESSAGE_TYPE)),
             trackId: ArrayUtils::pull($headers, MessageHeaders::KEY_TRACK_ID),
-            dateTime: ArrayUtils::pull($headers, MessageHeaders::KEY_DATE_TIME),
-            dateTimeOriginal: ArrayUtils::pull($headers, MessageHeaders::KEY_DATE_TIME_ORIGINAL),
+            dateTime: null === $dateTimeString ? null : new \DateTimeImmutable($dateTimeString),
+            dateTimeOriginal: null === $dateTimeOriginalString ? null : new \DateTimeImmutable($dateTimeOriginalString),
             fromOriginal: ArrayUtils::pull($headers, MessageHeaders::KEY_FROM_ORIGINAL),
             trackIdOriginal: ArrayUtils::pull($headers, MessageHeaders::KEY_TRACK_ID_ORIGINAL),
             version: ArrayUtils::pull($headers, MessageHeaders::KEY_VERSION),
@@ -59,11 +71,7 @@ final readonly class MessageFactory
         $this->logger->debug('Starting message body serialization...');
 
         try {
-            return json_decode(
-                json: $body,
-                associative: true,
-                flags: \JSON_THROW_ON_ERROR,
-            );
+            return json_decode($body, true, \JSON_THROW_ON_ERROR, \JSON_THROW_ON_ERROR);
         } catch (\Exception) {
             $this->logger->debug('Message body cannot be serialized in json format. Returning a string body.');
         }

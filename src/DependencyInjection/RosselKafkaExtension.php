@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Rossel\RosselKafka\DependencyInjection;
 
+use Rossel\RosselKafka\Consumer\ConsumerInterface;
+use Rossel\RosselKafka\Enum\Config\Producer\ProducerConfigKeys;
 use Rossel\RosselKafka\Enum\Config\RootConfigKeys;
 use Rossel\RosselKafka\RosselKafkaBundle;
 use Symfony\Component\Config\FileLocator;
@@ -23,6 +25,11 @@ final class RosselKafkaExtension extends Extension implements PrependExtensionIn
         $config = $this->processConfiguration($configuration, $configs);
 
         $container->setParameter(RosselKafkaBundle::BUNDLE_NAME.'.'.RootConfigKeys::BROKER_URL->value, $config[RootConfigKeys::BROKER_URL->value]);
+        $container->setParameter(RosselKafkaBundle::BUNDLE_NAME.'.'.RootConfigKeys::PRODUCER->value.'.'.ProducerConfigKeys::APP_NAME->value, $config[RootConfigKeys::PRODUCER->value][ProducerConfigKeys::APP_NAME->value]);
+
+        $container
+            ->registerForAutoconfiguration(ConsumerInterface::class)
+            ->addTag('rossel_kafka.consumer');
 
         $loader = new YamlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
         $loader->load('services.yaml');
@@ -58,8 +65,8 @@ final class RosselKafkaExtension extends Extension implements PrependExtensionIn
         $rosselKafkaConfig = $container->getExtensionConfig(RosselKafkaBundle::BUNDLE_NAME);
 
         foreach ($rosselKafkaConfig as $configParametersGroup) {
-            if (\array_key_exists('broker_url', $configParametersGroup)) {
-                $brokerUrl = $configParametersGroup['broker_url'];
+            if (\array_key_exists(RootConfigKeys::BROKER_URL->value, $configParametersGroup)) {
+                $brokerUrl = $configParametersGroup[RootConfigKeys::BROKER_URL->value];
             }
         }
 

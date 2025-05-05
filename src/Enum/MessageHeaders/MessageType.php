@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace Rossel\RosselKafka\Enum\MessageHeaders;
 
 use Rossel\RosselKafka\Enum\Infrastructure\KafkaTopic;
+use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 
 enum MessageType
 {
+    case LOG;
     case SYNC_B2C_ERP_SUBSCRIPTION;
     case SYNC_B2C_ERP_SUBSCRIPTION_PAYMENT_METHODS;
     case CREATE_OR_UPDATE_B2C_PROFILE;
@@ -65,5 +67,16 @@ enum MessageType
                 KafkaTopic::SYNC_CDP,
             ],
         };
+    }
+
+    public static function from(string $name): self
+    {
+        foreach (self::cases() as $case) {
+            if ($case->name === $name) {
+                return $case;
+            }
+        }
+
+        throw new BadRequestException(\sprintf('%s case %s not found.', self::class, $name));
     }
 }

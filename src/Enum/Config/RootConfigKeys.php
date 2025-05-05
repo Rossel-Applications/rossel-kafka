@@ -7,4 +7,5 @@ namespace Rossel\RosselKafka\Enum\Config;
 enum RootConfigKeys: string
 {
     case BROKER_URL = 'broker_url';
+    case PRODUCER = 'producer';
 }

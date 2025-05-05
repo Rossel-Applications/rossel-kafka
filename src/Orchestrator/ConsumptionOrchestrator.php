@@ -5,14 +5,19 @@ declare(strict_types=1);
 namespace Rossel\RosselKafka\Orchestrator;
 
 use Enqueue\RdKafka\RdKafkaMessage;
+use Interop\Queue\Exception;
+use Interop\Queue\Exception\InvalidDestinationException;
+use Interop\Queue\Exception\InvalidMessageException;
 use Psr\Log\LoggerInterface;
 use Rossel\RosselKafka\Consumer\ConsumerInterface;
 use Rossel\RosselKafka\Enum\Infrastructure\KafkaTopic;
+use Rossel\RosselKafka\Enum\MessageHeaders\MessageType;
 use Rossel\RosselKafka\Factory\MessageFactory;
 use Rossel\RosselKafka\Model\Message;
+use Rossel\RosselKafka\Model\MessageHeaders;
 use Rossel\RosselKafka\Service\Connector\KafkaConnector;
 
-readonly class ConsumptionOrchestrator
+final readonly class ConsumptionOrchestrator
 {
     /**
      * @param iterable<ConsumerInterface> $consumers
@@ -21,7 +26,8 @@ readonly class ConsumptionOrchestrator
         private LoggerInterface $logger,
         private KafkaConnector $kafkaConnector,
         private MessageFactory $messageFactory,
-        private iterable $consumers = [],
+        private iterable $consumers,
+        private string $appName,
     ) {
     }
 
@@ -96,6 +102,12 @@ readonly class ConsumptionOrchestrator
         );
     }
 
+    /**
+     * @throws InvalidMessageException
+     * @throws InvalidDestinationException
+     * @throws Exception
+     * @throws \JsonException
+     */
     private function tryConsumer(
         ConsumerInterface $consumer,
         Message $message,
@@ -119,6 +131,8 @@ readonly class ConsumptionOrchestrator
                     'consumer' => $consumer::class,
                 ]
             );
+
+            $this->sendLogMessage($message, $topic, true);
 
             return true;
         }
@@ -146,6 +160,37 @@ readonly class ConsumptionOrchestrator
             ]
         );
 
+        $this->sendLogMessage($message, $topic, false);
+
         return false;
+    }
+
+    /**
+     * @throws InvalidDestinationException
+     * @throws InvalidMessageException
+     * @throws Exception
+     * @throws \JsonException
+     */
+    private function sendLogMessage(
+        Message $originalMessage,
+        KafkaTopic $topic,
+        bool $success,
+    ): void {
+        $originalHeaders = $originalMessage->getRdKafkaMessage()->getHeaders();
+
+        $area = $originalHeaders[MessageHeaders::KEY_AREA];
+        $trackId = $originalHeaders[MessageHeaders::KEY_TRACK_ID];
+
+        $message = new Message(
+            new MessageHeaders(
+                area: $area,
+                from: $this->appName,
+                messageType: MessageType::LOG,
+                trackId: $trackId,
+            ),
+            $success ? 'EXEC_SUCCESS' : 'EXEC_ERROR',
+        );
+
+        $this->kafkaConnector->send($topic, $message);
     }
 }
