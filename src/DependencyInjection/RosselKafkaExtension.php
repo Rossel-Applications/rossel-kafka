@@ -65,7 +65,9 @@ final class RosselKafkaExtension extends Extension implements PrependExtensionIn
         $rosselKafkaConfig = $container->getExtensionConfig(RosselKafkaBundle::BUNDLE_NAME);
 
         foreach ($rosselKafkaConfig as $configParametersGroup) {
-            if (\array_key_exists(RootConfigKeys::BROKER_URL->value, $configParametersGroup)) {
+            if (\is_array($configParametersGroup)
+                && \array_key_exists(RootConfigKeys::BROKER_URL->value, $configParametersGroup)
+            ) {
                 $brokerUrl = $configParametersGroup[RootConfigKeys::BROKER_URL->value];
             }
         }

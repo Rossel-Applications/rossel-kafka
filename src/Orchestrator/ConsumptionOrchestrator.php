@@ -48,6 +48,7 @@ final readonly class ConsumptionOrchestrator
 
         $this->logger->info(\sprintf('Consumer is now listening on topic "%s".', $topic->name));
 
+        /* @phpstan-ignore while.alwaysTrue */
         while (true) {
             $message = $consumer->receive(1000);
 

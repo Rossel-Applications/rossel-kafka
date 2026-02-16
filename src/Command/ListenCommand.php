@@ -49,6 +49,7 @@ final class ListenCommand extends Command
     {
         $this->io = new SymfonyStyle($input, $output);
 
+        /** @var string $topicsInput */
         $topicsInput = $input->getOption('topics');
 
         $topics = $this->extractTopicsFromString($topicsInput);
