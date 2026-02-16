@@ -47,31 +47,53 @@ final readonly class MessageFactory
         /** @var ?string $dateTimeOriginalString */
         $dateTimeOriginalString = ArrayUtils::pull($headers, MessageHeaders::KEY_DATE_TIME_ORIGINAL);
 
+        /** @var int|string $area */
+        $area = ArrayUtils::pull($headers, MessageHeaders::KEY_AREA);
+
+        /** @var string $from */
+        $from = ArrayUtils::pull($headers, MessageHeaders::KEY_FROM);
+
+        /** @var string $messageType */
+        $messageType = ArrayUtils::pull($headers, MessageHeaders::KEY_MESSAGE_TYPE);
+
+        /** @var string|null $trackId */
+        $trackId = ArrayUtils::pull($headers, MessageHeaders::KEY_TRACK_ID);
+
+        /** @var string|null $fromOriginal */
+        $fromOriginal = ArrayUtils::pull($headers, MessageHeaders::KEY_FROM_ORIGINAL);
+
+        /** @var string|null $trackIdOriginal */
+        $trackIdOriginal = ArrayUtils::pull($headers, MessageHeaders::KEY_TRACK_ID_ORIGINAL);
+
+        /** @var string $version */
+        $version = ArrayUtils::pull($headers, MessageHeaders::KEY_VERSION);
+
         return new MessageHeaders(
-            area: Area::from(ArrayUtils::pull($headers, MessageHeaders::KEY_AREA)),
-            from: ArrayUtils::pull($headers, MessageHeaders::KEY_FROM),
-            messageType: MessageType::from(ArrayUtils::pull($headers, MessageHeaders::KEY_MESSAGE_TYPE)),
-            trackId: ArrayUtils::pull($headers, MessageHeaders::KEY_TRACK_ID),
+            area: Area::from($area),
+            from: $from,
+            messageType: MessageType::from($messageType),
+            trackId: $trackId,
             dateTime: null === $dateTimeString ? null : new \DateTimeImmutable($dateTimeString),
             dateTimeOriginal: null === $dateTimeOriginalString ? null : new \DateTimeImmutable($dateTimeOriginalString),
-            fromOriginal: ArrayUtils::pull($headers, MessageHeaders::KEY_FROM_ORIGINAL),
-            trackIdOriginal: ArrayUtils::pull($headers, MessageHeaders::KEY_TRACK_ID_ORIGINAL),
-            version: ArrayUtils::pull($headers, MessageHeaders::KEY_VERSION),
+            fromOriginal: $fromOriginal,
+            trackIdOriginal: $trackIdOriginal,
+            version: $version,
             additionalHeaders: $headers,
         );
     }
 
     /**
-     * @return string|array<array-key, mixed>
+     * @return array<array-key, mixed>|string
      */
-    private function createMessageBodyFromRdKafka(RdKafkaMessage $message): array
+    private function createMessageBodyFromRdKafka(RdKafkaMessage $message): array|string
     {
         $body = $message->getBody();
 
         $this->logger->debug('Starting message body serialization...');
 
         try {
-            return json_decode($body, true, \JSON_THROW_ON_ERROR, \JSON_THROW_ON_ERROR);
+            /* @var array<array-key, mixed> */
+            return json_decode($body, true, 512, \JSON_THROW_ON_ERROR);
         } catch (\Exception) {
             $this->logger->debug('Message body cannot be serialized in json format. Returning a string body.');
         }
@@ -79,6 +101,9 @@ final readonly class MessageFactory
         return $body;
     }
 
+    /**
+     * @param array<array-key, mixed> $headers
+     */
     private function validateMessageHeaders(array $headers): void
     {
         $optionsResolver = new OptionsResolver();

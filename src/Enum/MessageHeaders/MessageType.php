@@ -31,6 +31,8 @@ enum MessageType
     case SYNC_B2C_PROFILE;
 
     /**
+     * @throws \Exception
+     *
      * @return array<int, KafkaTopic>
      */
     public function getTopics(): array
@@ -66,6 +68,7 @@ enum MessageType
             self::SYNC_B2C_PROFILE => [
                 KafkaTopic::SYNC_CDP,
             ],
+            self::LOG => throw new \Exception('To be implemented'),
         };
     }
 

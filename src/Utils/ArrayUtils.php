@@ -6,6 +6,9 @@ namespace Rossel\RosselKafka\Utils;
 
 final readonly class ArrayUtils
 {
+    /**
+     * @param array<array-key, mixed> $array
+     */
     public static function pull(array $array, string $key): mixed
     {
         if (!\array_key_exists($key, $array)) {
