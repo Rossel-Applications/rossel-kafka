@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Rossel\RosselKafka\Command;
 
-use Rossel\RosselKafka\Enum\Infrastructure\KafkaTopic;
+use Rossel\RosselKafka\Service\KafkaTopicsFetcher;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -16,6 +16,7 @@ final class InitializeTopicsCommand extends Command
     private const COMMAND_DESCRIPTION = 'Initializes topics';
 
     public function __construct(
+        private readonly KafkaTopicsFetcher $kafkaTopicsFetcher,
     ) {
         parent::__construct(
             name: self::COMMAND_NAME,
@@ -31,12 +32,12 @@ final class InitializeTopicsCommand extends Command
     {
         $processes = [];
 
-        foreach (KafkaTopic::cases() as $topic) {
+        foreach ($this->kafkaTopicsFetcher->getAll() as $topic) {
             $process = new Process([
                 './kafka-topics.sh',
                 '--bootstrap-server=localhost:9092',
                 '--create',
-                \sprintf('--topic=%s', $topic->name),
+                \sprintf('--topic=%s', $topic->getName()),
             ]);
 
             $process->start();
