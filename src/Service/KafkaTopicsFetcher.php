@@ -148,12 +148,13 @@ class KafkaTopicsFetcher
         array $topics,
     ): void {
         foreach ($topics as $topicConfigKey => $topicName) {
-            $this->initializeTopic($topicConfigKey);
+            $this->initializeTopic($topicConfigKey, $topicName);
         }
     }
 
     private function initializeTopic(
         string $topicConfigKey,
+        string $topicName,
     ): void {
         $validatedTopicConfigKey = TopicConfigKeys::from($topicConfigKey);
 
@@ -161,7 +162,7 @@ class KafkaTopicsFetcher
 
         $this->topics[$validatedTopicConfigKey->name] = new Topic(
             configKey: $validatedTopicConfigKey,
-            name: $validatedTopicConfigKey->value,
+            name: $topicName,
             messageTypes: $messages,
         );
     }

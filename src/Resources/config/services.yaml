@@ -22,6 +22,18 @@ services:
     arguments:
       $brokerUrl: '%rossel_kafka.broker.url%'
       $appName: '%rossel_kafka.producer.app_name%'
+      $saslUsername: '%rossel_kafka.broker.authentication.sasl_username%'
+      $saslPassword: '%rossel_kafka.broker.authentication.sasl_password%'
+      $saslMechanism: '%rossel_kafka.broker.authentication.sasl_mechanism%'
+      $sslCaCertificateUrl: '%rossel_kafka.broker.authentication.ssl_ca_certificate_url%'
+      $sslCaCertificatePath: '%rossel_kafka.broker.authentication.ssl_ca_certificate_path%'
+      $sslClientCertificate: '%rossel_kafka.broker.authentication.ssl_client_certificate%'
+      $sslClientKey: '%rossel_kafka.broker.authentication.ssl_client_key%'
+      $sslClientKeyPassword: '%rossel_kafka.broker.authentication.ssl_client_key_password%'
+
+  Rossel\RosselKafka\Service\KafkaTopicsFetcher:
+    arguments:
+      $topics: '%rossel_kafka.broker.topics%'
 
   Rossel\RosselKafka\Service\KafkaTopicsFetcher:
     arguments:

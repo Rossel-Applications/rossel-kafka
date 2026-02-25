@@ -10,6 +10,7 @@ use Interop\Queue\Exception\InvalidDestinationException;
 use Interop\Queue\Exception\InvalidMessageException;
 use Psr\Log\LoggerInterface;
 use Rossel\RosselKafka\Consumer\ConsumerInterface;
+use Rossel\RosselKafka\Enum\MessageHeaders\Area;
 use Rossel\RosselKafka\Enum\MessageHeaders\MessageType;
 use Rossel\RosselKafka\Factory\MessageFactory;
 use Rossel\RosselKafka\Model\Message;
@@ -34,6 +35,8 @@ final readonly class ConsumptionOrchestrator
     public function listen(
         Topic $topic,
         ?\Closure $onStartCallable = null,
+        ?\Closure $onIdleCallable = null,
+        ?\Closure $onMessageCallable = null,
     ): void {
         if (null !== $onStartCallable) {
             $this->logger->debug('Executing onStartCallable before consumer creation.');
@@ -50,7 +53,7 @@ final readonly class ConsumptionOrchestrator
 
         /* @phpstan-ignore while.alwaysTrue */
         while (true) {
-            $message = $consumer->receive(1000);
+            $message = $consumer->receive(200);
 
             if ($message instanceof RdKafkaMessage) {
                 $this->logger->info(
@@ -66,6 +69,14 @@ final readonly class ConsumptionOrchestrator
 
                 // Marque le message comme "traité"
                 $consumer->acknowledge($message);
+
+                if (null !== $onMessageCallable) {
+                    $onMessageCallable($topic, $rosselMessage->getType());
+                }
+            } else {
+                if (null !== $onIdleCallable) {
+                    $onIdleCallable($topic);
+                }
             }
         }
     }
@@ -179,8 +190,16 @@ final readonly class ConsumptionOrchestrator
     ): void {
         $originalHeaders = $originalMessage->getRdKafkaMessage()->getHeaders();
 
-        $area = $originalHeaders[MessageHeaders::KEY_AREA];
-        $trackId = $originalHeaders[MessageHeaders::KEY_TRACK_ID];
+        $areaValue = $originalHeaders[MessageHeaders::KEY_AREA];
+        $area = Area::from(\is_string($areaValue) ? $areaValue : '');
+
+        $trackId = null;
+
+        if (\array_key_exists(MessageHeaders::KEY_TRACK_ID, $originalHeaders)
+            && \is_string($originalHeaders[MessageHeaders::KEY_TRACK_ID])
+        ) {
+            $trackId = $originalHeaders[MessageHeaders::KEY_TRACK_ID];
+        }
 
         $message = new Message(
             new MessageHeaders(

@@ -19,8 +19,8 @@ readonly class Message implements MessageInterface
     /**
      * Initializes the message with the provided headers and body.
      *
-     * @param MessageHeadersInterface     $headers the message headers
-     * @param array<string, mixed>|string $body    the message body
+     * @param MessageHeadersInterface        $headers the message headers
+     * @param array<array-key, mixed>|string $body    the message body
      *
      * @throws \JsonException
      */

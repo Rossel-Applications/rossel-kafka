@@ -41,6 +41,62 @@ rossel_kafka:
 
 Each topic key maps to the actual Kafka topic name provided via environment variable.
 
+## Broker authentication
+
+Authentication is **optional** — typically required in production, but not in local development.
+
+All authentication options live under `broker.authentication` in the bundle config (already wired to env vars by the bundle's default config file).
+
+### SASL
+
+Set both username and password to enable SASL:
+
+```dotenv
+ROSSEL_KAFKA_BROKER_SASL_USERNAME=my-user
+ROSSEL_KAFKA_BROKER_SASL_PASSWORD=my-password
+# Mechanism: PLAIN (default), SCRAM-SHA-256 or SCRAM-SHA-512
+ROSSEL_KAFKA_BROKER_SASL_MECHANISM=PLAIN
+```
+
+### SSL — CA certificate
+
+Two options, mutually exclusive — the local file takes priority:
+
+**From a local file:**
+```dotenv
+ROSSEL_KAFKA_BROKER_SSL_CA_CERTIFICATE_PATH=/path/to/ca.pem
+```
+
+**From a URL (downloaded automatically, cached in `/tmp`):**
+```dotenv
+ROSSEL_KAFKA_BROKER_SSL_CA_CERTIFICATE_URL=https://...
+```
+
+### mTLS — client certificate
+
+For mutual TLS, provide the client certificate and private key in addition to the CA certificate above.
+Each variable accepts either a **PEM file path** or **raw PEM content**:
+
+```dotenv
+ROSSEL_KAFKA_BROKER_SSL_CLIENT_CERTIFICATE=/path/to/client.crt.pem
+ROSSEL_KAFKA_BROKER_SSL_CLIENT_KEY=/path/to/client.key.pem
+# Optional: password protecting the private key
+ROSSEL_KAFKA_BROKER_SSL_CLIENT_KEY_PASSWORD=secret
+```
+
+### Security protocol — auto-selected
+
+The bundle selects the `security.protocol` rdkafka option automatically based on which credentials are provided:
+
+| CA cert / client cert | SASL | Protocol         |
+|-----------------------|------|------------------|
+| no                    | no   | `plaintext`      |
+| yes                   | no   | `ssl`            |
+| no                    | yes  | `sasl_plaintext` |
+| yes                   | yes  | `sasl_ssl`       |
+
+> Unset or empty variables are treated as `null` — no configuration needed for unauthenticated brokers.
+
 ## Usage
 
 ### Send a message to a topic
