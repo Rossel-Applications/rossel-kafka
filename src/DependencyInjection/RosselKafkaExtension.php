@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Rossel\RosselKafka\DependencyInjection;
 
 use Rossel\RosselKafka\Consumer\ConsumerInterface;
+use Rossel\RosselKafka\Enum\Config\Broker\BrokerConfigKeys;
 use Rossel\RosselKafka\Enum\Config\Producer\ProducerConfigKeys;
 use Rossel\RosselKafka\Enum\Config\RootConfigKeys;
 use Rossel\RosselKafka\RosselKafkaBundle;
@@ -24,7 +25,8 @@ final class RosselKafkaExtension extends Extension implements PrependExtensionIn
         $configuration = new Configuration();
         $config = $this->processConfiguration($configuration, $configs);
 
-        $container->setParameter(RosselKafkaBundle::BUNDLE_NAME.'.'.RootConfigKeys::BROKER_URL->value, $config[RootConfigKeys::BROKER_URL->value]);
+        $container->setParameter(RosselKafkaBundle::BUNDLE_NAME.'.'.RootConfigKeys::BROKER->value.'.'.BrokerConfigKeys::URL->value, $config[RootConfigKeys::BROKER->value][BrokerConfigKeys::URL->value]);
+        $container->setParameter(RosselKafkaBundle::BUNDLE_NAME.'.'.RootConfigKeys::BROKER->value.'.'.BrokerConfigKeys::TOPICS->value, $config[RootConfigKeys::BROKER->value][BrokerConfigKeys::TOPICS->value]);
         $container->setParameter(RosselKafkaBundle::BUNDLE_NAME.'.'.RootConfigKeys::PRODUCER->value.'.'.ProducerConfigKeys::APP_NAME->value, $config[RootConfigKeys::PRODUCER->value][ProducerConfigKeys::APP_NAME->value]);
 
         $container
@@ -66,9 +68,11 @@ final class RosselKafkaExtension extends Extension implements PrependExtensionIn
 
         foreach ($rosselKafkaConfig as $configParametersGroup) {
             if (\is_array($configParametersGroup)
-                && \array_key_exists(RootConfigKeys::BROKER_URL->value, $configParametersGroup)
+                && \array_key_exists(RootConfigKeys::BROKER->value, $configParametersGroup)
+                && \is_array($configParametersGroup[RootConfigKeys::BROKER->value])
+                && \array_key_exists(BrokerConfigKeys::URL->value, $configParametersGroup[RootConfigKeys::BROKER->value])
             ) {
-                $brokerUrl = $configParametersGroup[RootConfigKeys::BROKER_URL->value];
+                $brokerUrl = $configParametersGroup[RootConfigKeys::BROKER->value][BrokerConfigKeys::URL->value];
             }
         }
 

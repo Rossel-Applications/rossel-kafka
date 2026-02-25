@@ -10,11 +10,11 @@ use Interop\Queue\Exception\InvalidDestinationException;
 use Interop\Queue\Exception\InvalidMessageException;
 use Psr\Log\LoggerInterface;
 use Rossel\RosselKafka\Consumer\ConsumerInterface;
-use Rossel\RosselKafka\Enum\Infrastructure\KafkaTopic;
 use Rossel\RosselKafka\Enum\MessageHeaders\MessageType;
 use Rossel\RosselKafka\Factory\MessageFactory;
 use Rossel\RosselKafka\Model\Message;
 use Rossel\RosselKafka\Model\MessageHeaders;
+use Rossel\RosselKafka\Model\Topic;
 use Rossel\RosselKafka\Service\Connector\KafkaConnector;
 
 final readonly class ConsumptionOrchestrator
@@ -32,7 +32,7 @@ final readonly class ConsumptionOrchestrator
     }
 
     public function listen(
-        KafkaTopic $topic,
+        Topic $topic,
         ?\Closure $onStartCallable = null,
     ): void {
         if (null !== $onStartCallable) {
@@ -40,13 +40,13 @@ final readonly class ConsumptionOrchestrator
             $onStartCallable($topic);
         }
 
-        $this->logger->info(\sprintf('Initializing Kafka consumer for topic "%s"...', $topic->name));
+        $this->logger->info(\sprintf('Initializing Kafka consumer for topic "%s"...', $topic->getName()));
 
-        $this->logger->debug(\sprintf('Creating consumer for topic %s...', $topic->name));
+        $this->logger->debug(\sprintf('Creating consumer for topic %s...', $topic->getName()));
         $consumer = $this->kafkaConnector->createConsumer($topic);
-        $this->logger->debug(\sprintf('Consumer for topic %s successfully created.', $topic->name));
+        $this->logger->debug(\sprintf('Consumer for topic %s successfully created.', $topic->getName()));
 
-        $this->logger->info(\sprintf('Consumer is now listening on topic "%s".', $topic->name));
+        $this->logger->info(\sprintf('Consumer is now listening on topic "%s".', $topic->getName()));
 
         /* @phpstan-ignore while.alwaysTrue */
         while (true) {
@@ -72,7 +72,7 @@ final readonly class ConsumptionOrchestrator
 
     private function processRosselMessage(
         Message $message,
-        KafkaTopic $topic,
+        Topic $topic,
     ): void {
         $messageId = $message->getRdKafkaMessage()->getMessageId();
 
@@ -93,11 +93,11 @@ final readonly class ConsumptionOrchestrator
             \sprintf(
                 'No consumer found for message type %s and topic %s',
                 $message->getType()->name,
-                $topic->name,
+                $topic->getName(),
             ),
             [
                 'id' => $messageId,
-                'topic' => $topic->name,
+                'topic' => $topic->getName(),
                 'type' => $message->getType()->name,
             ]
         );
@@ -112,7 +112,7 @@ final readonly class ConsumptionOrchestrator
     private function tryConsumer(
         ConsumerInterface $consumer,
         Message $message,
-        KafkaTopic $topic,
+        Topic $topic,
     ): bool {
         $messageId = $message->getRdKafkaMessage()->getMessageId();
 
@@ -174,7 +174,7 @@ final readonly class ConsumptionOrchestrator
      */
     private function sendLogMessage(
         Message $originalMessage,
-        KafkaTopic $topic,
+        Topic $topic,
         bool $success,
     ): void {
         $originalHeaders = $originalMessage->getRdKafkaMessage()->getHeaders();

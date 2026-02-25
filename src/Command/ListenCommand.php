@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace Rossel\RosselKafka\Command;
 
 use Psr\Log\LoggerInterface;
-use Rossel\RosselKafka\Enum\Infrastructure\KafkaTopic;
+use Rossel\RosselKafka\Enum\Config\Broker\TopicConfigKeys;
+use Rossel\RosselKafka\Model\Topic;
 use Rossel\RosselKafka\Orchestrator\ConsumptionOrchestrator;
+use Rossel\RosselKafka\Service\KafkaTopicsFetcher;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -27,6 +29,7 @@ final class ListenCommand extends Command
 
     public function __construct(
         private readonly ConsumptionOrchestrator $consumptionOrchestrator,
+        private readonly KafkaTopicsFetcher $kafkaTopicsFetcher,
         private readonly LoggerInterface $logger,
     ) {
         parent::__construct(
@@ -84,7 +87,7 @@ final class ListenCommand extends Command
                 'php',
                 'bin/console',
                 self::COMMAND_NAME,
-                \sprintf('--%s=%s', self::COMMAND_OPTION_TOPIC_NAME, $topic->name),
+                \sprintf('--%s=%s', self::COMMAND_OPTION_TOPIC_NAME, $topic->getConfigKey()->value),
             ]);
 
             $process->start();
@@ -111,29 +114,29 @@ final class ListenCommand extends Command
     }
 
     /**
-     * @return array<array-key, KafkaTopic>
+     * @return array<array-key, Topic>
      */
     private function extractTopicsFromString(?string $topics): array
     {
         if (null === $topics || '' === str_replace([',', ' '], '', $topics)) {
-            return KafkaTopic::cases();
+            return array_values($this->kafkaTopicsFetcher->getAll());
         }
 
         $results = [];
 
         foreach (explode(',', $topics) as $topicString) {
-            $results[] = KafkaTopic::case(trim($topicString));
+            $results[] = $this->kafkaTopicsFetcher->get(TopicConfigKeys::from(trim($topicString)));
         }
 
         return $results;
     }
 
-    private function onStart(KafkaTopic $topic): void
+    private function onStart(Topic $topic): void
     {
         if (null === ($io = $this->io)) {
             return;
         }
 
-        $io->info(\sprintf('Starting listening on %s...', $topic->name));
+        $io->info(\sprintf('Starting listening on %s...', $topic->getName()));
     }
 }

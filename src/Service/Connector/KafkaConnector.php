@@ -12,8 +12,8 @@ use Enqueue\RdKafka\RdKafkaTopic;
 use Interop\Queue\Exception;
 use Interop\Queue\Exception\InvalidDestinationException;
 use Interop\Queue\Exception\InvalidMessageException;
-use Rossel\RosselKafka\Enum\Infrastructure\KafkaTopic;
 use Rossel\RosselKafka\Model\MessageInterface;
+use Rossel\RosselKafka\Model\Topic;
 
 final class KafkaConnector implements KafkaConnectorInterface
 {
@@ -21,14 +21,13 @@ final class KafkaConnector implements KafkaConnectorInterface
 
     private readonly RdKafkaProducer $rdKafkaProducer;
 
-    /** @var \SplObjectStorage<KafkaTopic, RdKafkaTopic> */
-    private \SplObjectStorage $topics;
+    /** @var array<string, RdKafkaTopic> */
+    private array $rdKafkaTopics = [];
 
     public function __construct(
         string $brokerUrl,
         private string $appName,
     ) {
-        $this->topics = new \SplObjectStorage();
         $this->rdKafkaContext = $this->buildContext($brokerUrl);
         $this->rdKafkaProducer = $this->rdKafkaContext->createProducer();
     }
@@ -40,9 +39,9 @@ final class KafkaConnector implements KafkaConnectorInterface
      * @throws InvalidMessageException
      * @throws Exception
      */
-    public function send(KafkaTopic|RdKafkaTopic $topic, MessageInterface $message): void
+    public function send(Topic|RdKafkaTopic $topic, MessageInterface $message): void
     {
-        if ($topic instanceof KafkaTopic) {
+        if ($topic instanceof Topic) {
             $topic = $this->getRdKafkaTopic($topic);
         }
 
@@ -55,46 +54,21 @@ final class KafkaConnector implements KafkaConnectorInterface
     /**
      * Create a consumer object, which is responsible for listening messages published on a topic.
      */
-    public function createConsumer(KafkaTopic $kafkaTopic): RdKafkaConsumer
+    public function createConsumer(Topic $topic): RdKafkaConsumer
     {
-        $rdKafkaTopic = $this->getRdKafkaTopic($kafkaTopic);
-
-        return $this->rdKafkaContext->createConsumer($rdKafkaTopic);
+        return $this->rdKafkaContext->createConsumer($this->getRdKafkaTopic($topic));
     }
 
-    /**
-     * Get the RdKafkaTopic associated with a KafkaTopic enum.
-     *
-     * @throws \InvalidArgumentException if the topic is not registered
-     */
-    private function getRdKafkaTopic(KafkaTopic $topic): RdKafkaTopic
+    private function getRdKafkaTopic(Topic $topic): RdKafkaTopic
     {
-        if (!$this->topics->contains($topic)) {
-            throw new \InvalidArgumentException(\sprintf('Topic "%s" is not registered in the KafkaConnector.', $topic->name));
-        }
-
-        return $this->topics[$topic];
+        return $this->rdKafkaTopics[$topic->getName()] ??= $this->rdKafkaContext->createTopic($topic->getName());
     }
 
-    /**
-     * Build the RdKafkaContext and initialize topics.
-     */
     private function buildContext(string $brokerUrl): RdKafkaContext
     {
-        $context = $this->buildConnectionFactory($brokerUrl)->createContext();
-
-        foreach (KafkaTopic::cases() as $topic) {
-            if (!$this->topics->contains($topic)) {
-                $this->topics[$topic] = $context->createTopic($topic->name);
-            }
-        }
-
-        return $context;
+        return $this->buildConnectionFactory($brokerUrl)->createContext();
     }
 
-    /**
-     * Build the RdKafkaConnectionFactory with the given broker url.
-     */
     private function buildConnectionFactory(string $brokerUrl): RdKafkaConnectionFactory
     {
         $brokerUrl = str_replace('kafka://', '', $brokerUrl);

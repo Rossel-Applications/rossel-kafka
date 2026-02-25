@@ -4,19 +4,19 @@ declare(strict_types=1);
 
 namespace Rossel\RosselKafka\Consumer;
 
-use Rossel\RosselKafka\Enum\Infrastructure\KafkaTopic;
 use Rossel\RosselKafka\Model\Message;
+use Rossel\RosselKafka\Model\Topic;
 
 interface ConsumerInterface
 {
     /**
      * Checks whether the given topic is supported by the consumer.
      *
-     * @param KafkaTopic $topic the Kafka topic to check
+     * @param Topic $topic the Kafka topic to check
      *
      * @return bool true if the topic is supported, false otherwise
      */
-    public function supportsTopic(KafkaTopic $topic): bool;
+    public function supportsTopic(Topic $topic): bool;
 
     /**
      * Checks whether the given message type is supported by the consumer.
@@ -31,8 +31,6 @@ interface ConsumerInterface
      * Handles the consumption of a supported message.
      *
      * @param Message $message the message to consume
-     *
-     * @return void
      */
     public function __invoke(Message $message): void;
 }

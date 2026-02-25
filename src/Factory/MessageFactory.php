@@ -92,7 +92,7 @@ final readonly class MessageFactory
         $this->logger->debug('Starting message body serialization...');
 
         try {
-            /* @var array<array-key, mixed> */
+            /** @var array<array-key, mixed> $decoded */
             return json_decode($body, true, 512, \JSON_THROW_ON_ERROR);
         } catch (\Exception) {
             $this->logger->debug('Message body cannot be serialized in json format. Returning a string body.');
