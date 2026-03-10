@@ -78,7 +78,7 @@ final readonly class MessageFactory
             fromOriginal: $fromOriginal,
             trackIdOriginal: $trackIdOriginal,
             version: $version,
-            additionalHeaders: $headers, // @phpstan-ignore argument.type
+            additionalHeaders: $headers,
         );
     }
 

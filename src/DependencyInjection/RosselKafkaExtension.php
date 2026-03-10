@@ -27,7 +27,7 @@ final class RosselKafkaExtension extends Extension implements PrependExtensionIn
          * @var array{
          *   broker: array{
          *     url: string,
-         *     topics: array<string, string>,
+         *     topics: array<string, string|null>,
          *     authentication: array{
          *       sasl_username: string|null,
          *       sasl_password: string|null,

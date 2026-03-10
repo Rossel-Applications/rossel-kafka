@@ -6,6 +6,7 @@ namespace Rossel\RosselKafka\Service;
 
 use Rossel\RosselKafka\Enum\Config\Broker\TopicConfigKeys;
 use Rossel\RosselKafka\Enum\MessageHeaders\MessageType;
+use Rossel\RosselKafka\Exception\UnconfiguredTopicException;
 use Rossel\RosselKafka\Model\Topic;
 
 class KafkaTopicsFetcher
@@ -104,7 +105,7 @@ class KafkaTopicsFetcher
     private array $topics = [];
 
     /**
-     * @param array<string, string> $topics
+     * @param array<string, string|null> $topics
      */
     public function __construct(
         array $topics,
@@ -114,7 +115,7 @@ class KafkaTopicsFetcher
 
     public function get(TopicConfigKeys $key): Topic
     {
-        return $this->topics[$key->name];
+        return $this->topics[$key->name] ?? throw new UnconfiguredTopicException($key);
     }
 
     /**
@@ -142,12 +143,16 @@ class KafkaTopicsFetcher
     }
 
     /**
-     * @param array<string, string> $topics
+     * @param array<string, string|null> $topics
      */
     private function initializeTopics(
         array $topics,
     ): void {
         foreach ($topics as $topicConfigKey => $topicName) {
+            if (null === $topicName || '' === $topicName) {
+                continue;
+            }
+
             $this->initializeTopic($topicConfigKey, $topicName);
         }
     }
