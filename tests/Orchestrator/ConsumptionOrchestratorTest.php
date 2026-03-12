@@ -395,11 +395,13 @@ final class ConsumptionOrchestratorTest extends TestCase
         $callCount = 0;
         $this->rdKafkaConsumer
             ->method('receive')
-            ->willReturnCallback(function () use (&$callCount, $rdKafkaMessage): ?RdKafkaMessage {
+            ->willReturnCallback(function () use (&$callCount, $rdKafkaMessage): RdKafkaMessage {
                 ++$callCount;
+
                 if (1 === $callCount) {
                     return $rdKafkaMessage;
                 }
+
                 throw new \RuntimeException('Break infinite loop');
             });
     }
