@@ -42,8 +42,13 @@ final class ConfigurationTest extends TestCase
             ],
         ]);
 
-        self::assertSame('kafka://localhost:9092', $config[RootConfigKeys::BROKER->value][BrokerConfigKeys::URL->value]);
-        self::assertSame('my-app', $config[RootConfigKeys::PRODUCER->value][ProducerConfigKeys::APP_NAME->value]);
+        /** @var array<string, mixed> $broker */
+        $broker = $config[RootConfigKeys::BROKER->value];
+        /** @var array<string, mixed> $producer */
+        $producer = $config[RootConfigKeys::PRODUCER->value];
+
+        self::assertSame('kafka://localhost:9092', $broker[BrokerConfigKeys::URL->value]);
+        self::assertSame('my-app', $producer[ProducerConfigKeys::APP_NAME->value]);
     }
 
     // -------------------------------------------------------------------------
@@ -102,7 +107,11 @@ final class ConfigurationTest extends TestCase
     public function authenticationDefaultsToNullsAndPlainMechanism(): void
     {
         $config = $this->processMinimal();
-        $auth = $config[RootConfigKeys::BROKER->value][BrokerConfigKeys::AUTHENTICATION->value];
+
+        /** @var array<string, mixed> $broker */
+        $broker = $config[RootConfigKeys::BROKER->value];
+        /** @var array<string, mixed> $auth */
+        $auth = $broker[BrokerConfigKeys::AUTHENTICATION->value];
 
         self::assertNull($auth[BrokerConfigKeys::SASL_USERNAME->value]);
         self::assertNull($auth[BrokerConfigKeys::SASL_PASSWORD->value]);
@@ -134,7 +143,10 @@ final class ConfigurationTest extends TestCase
             RootConfigKeys::PRODUCER->value => [ProducerConfigKeys::APP_NAME->value => 'app'],
         ]);
 
-        $auth = $config[RootConfigKeys::BROKER->value][BrokerConfigKeys::AUTHENTICATION->value];
+        /** @var array<string, mixed> $broker */
+        $broker = $config[RootConfigKeys::BROKER->value];
+        /** @var array<string, mixed> $auth */
+        $auth = $broker[BrokerConfigKeys::AUTHENTICATION->value];
 
         self::assertSame('user', $auth[BrokerConfigKeys::SASL_USERNAME->value]);
         self::assertSame('pass', $auth[BrokerConfigKeys::SASL_PASSWORD->value]);
@@ -152,7 +164,11 @@ final class ConfigurationTest extends TestCase
     public function allTopicsDefaultToNull(): void
     {
         $config = $this->processMinimal();
-        $topics = $config[RootConfigKeys::BROKER->value][BrokerConfigKeys::TOPICS->value];
+
+        /** @var array<string, mixed> $broker */
+        $broker = $config[RootConfigKeys::BROKER->value];
+        /** @var array<string, string|null> $topics */
+        $topics = $broker[BrokerConfigKeys::TOPICS->value];
 
         foreach (TopicConfigKeys::cases() as $key) {
             self::assertArrayHasKey($key->value, $topics);
@@ -174,7 +190,10 @@ final class ConfigurationTest extends TestCase
             RootConfigKeys::PRODUCER->value => [ProducerConfigKeys::APP_NAME->value => 'app'],
         ]);
 
-        $topics = $config[RootConfigKeys::BROKER->value][BrokerConfigKeys::TOPICS->value];
+        /** @var array<string, mixed> $broker */
+        $broker = $config[RootConfigKeys::BROKER->value];
+        /** @var array<string, string|null> $topics */
+        $topics = $broker[BrokerConfigKeys::TOPICS->value];
 
         self::assertSame('my.log.topic', $topics[TopicConfigKeys::PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->value]);
         self::assertSame('my.sub.topic', $topics[TopicConfigKeys::PUBLIC_SUBSCRIPTION_INPUT_V1_JSON_DELETE->value]);
@@ -204,10 +223,12 @@ final class ConfigurationTest extends TestCase
             RootConfigKeys::PRODUCER->value => [ProducerConfigKeys::APP_NAME->value => 'app'],
         ]);
 
-        self::assertSame(
-            $mechanism,
-            $config[RootConfigKeys::BROKER->value][BrokerConfigKeys::AUTHENTICATION->value][BrokerConfigKeys::SASL_MECHANISM->value],
-        );
+        /** @var array<string, mixed> $broker */
+        $broker = $config[RootConfigKeys::BROKER->value];
+        /** @var array<string, mixed> $auth */
+        $auth = $broker[BrokerConfigKeys::AUTHENTICATION->value];
+
+        self::assertSame($mechanism, $auth[BrokerConfigKeys::SASL_MECHANISM->value]);
     }
 
     // -------------------------------------------------------------------------
