@@ -18,7 +18,7 @@ use Rossel\RosselKafka\Model\MessageHeaders;
 use Rossel\RosselKafka\Model\Topic;
 use Rossel\RosselKafka\Service\Connector\KafkaConnectorInterface;
 
-final readonly class ConsumptionOrchestrator
+final readonly class ConsumptionOrchestrator implements ConsumptionOrchestratorInterface
 {
     /**
      * @param iterable<ConsumerInterface> $consumers
