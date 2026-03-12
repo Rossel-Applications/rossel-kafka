@@ -9,7 +9,7 @@ use Rossel\RosselKafka\Enum\MessageHeaders\MessageType;
 use Rossel\RosselKafka\Exception\UnconfiguredTopicException;
 use Rossel\RosselKafka\Model\Topic;
 
-class KafkaTopicsFetcher
+final class KafkaTopicsFetcher
 {
     private const KAFKA_TOPIC_MESSAGES_MAPPINGS = [
         TopicConfigKeys::ACCOUNT_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->name => [
