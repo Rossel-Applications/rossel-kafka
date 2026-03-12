@@ -13,7 +13,7 @@ use Rossel\RosselKafka\Model\MessageHeaders;
 use Rossel\RosselKafka\Utils\ArrayUtils;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
-final readonly class MessageFactory
+final readonly class MessageFactory implements MessageFactoryInterface
 {
     public function __construct(
         private LoggerInterface $logger,
