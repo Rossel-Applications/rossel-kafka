@@ -100,7 +100,7 @@ final class KafkaConnector implements KafkaConnectorInterface
             'group.id' => $this->appName,
             'metadata.broker.list' => $brokerUrl,
             'enable.auto.commit' => 'true',
-            'auto.commit.interval.ms' => '5s',
+            'auto.commit.interval.ms' => '5000',
             'enable.idempotence' => 'true',
             'retries' => '2147483647',
             'linger.ms' => '100',
