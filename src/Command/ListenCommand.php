@@ -9,8 +9,8 @@ use Rossel\RosselKafka\Command\Output\PlainListenOutputStrategy;
 use Rossel\RosselKafka\Command\Output\TableListenOutputStrategy;
 use Rossel\RosselKafka\Enum\Config\Broker\TopicConfigKeys;
 use Rossel\RosselKafka\Model\Topic;
-use Rossel\RosselKafka\Orchestrator\ConsumptionOrchestrator;
-use Rossel\RosselKafka\Service\KafkaTopicsFetcher;
+use Rossel\RosselKafka\Orchestrator\ConsumptionOrchestratorInterface;
+use Rossel\RosselKafka\Service\KafkaTopicsFetcherInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -27,8 +27,8 @@ final class ListenCommand extends Command
     private const COMMAND_OPTION_TOPIC_DESCRIPTION = 'Topics to listen to (separated by comma)';
 
     public function __construct(
-        private readonly ConsumptionOrchestrator $consumptionOrchestrator,
-        private readonly KafkaTopicsFetcher $kafkaTopicsFetcher,
+        private readonly ConsumptionOrchestratorInterface $consumptionOrchestrator,
+        private readonly KafkaTopicsFetcherInterface $kafkaTopicsFetcher,
         private readonly LoggerInterface $logger,
     ) {
         parent::__construct(
