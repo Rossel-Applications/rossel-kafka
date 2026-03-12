@@ -16,7 +16,7 @@ use Rossel\RosselKafka\Factory\MessageFactory;
 use Rossel\RosselKafka\Model\Message;
 use Rossel\RosselKafka\Model\MessageHeaders;
 use Rossel\RosselKafka\Model\Topic;
-use Rossel\RosselKafka\Service\Connector\KafkaConnector;
+use Rossel\RosselKafka\Service\Connector\KafkaConnectorInterface;
 
 final readonly class ConsumptionOrchestrator
 {
@@ -25,7 +25,7 @@ final readonly class ConsumptionOrchestrator
      */
     public function __construct(
         private LoggerInterface $logger,
-        private KafkaConnector $kafkaConnector,
+        private KafkaConnectorInterface $kafkaConnector,
         private MessageFactory $messageFactory,
         private iterable $consumers,
         private string $appName,
