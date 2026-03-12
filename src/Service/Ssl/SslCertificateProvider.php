@@ -89,9 +89,9 @@ final class SslCertificateProvider
             ],
         ]);
 
-        if (!file_exists($url)
-            || false === \in_array($content = file_get_contents($url, false, $context), ['', false], true)
-        ) {
+        $content = file_get_contents($url, false, $context);
+
+        if (false === $content || '' === $content) {
             throw new \RuntimeException(\sprintf('Failed to download SSL CA certificate from URL: %s', $url));
         }
 
