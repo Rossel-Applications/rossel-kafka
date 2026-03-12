@@ -68,6 +68,7 @@ final readonly class MessageFactory implements MessageFactoryInterface
         /** @var string $version */
         $version = ArrayUtils::pull($headers, MessageHeaders::KEY_VERSION);
 
+        /* @var array<string, scalar> $headers */
         return new MessageHeaders(
             area: Area::from($area),
             from: $from,
