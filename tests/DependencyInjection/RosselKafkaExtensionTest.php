@@ -22,6 +22,9 @@ final class RosselKafkaExtensionTest extends TestCase
         $this->container = new ContainerBuilder();
     }
 
+    /**
+     * @param array<string, mixed> $config
+     */
     private function load(array $config): void
     {
         try {
@@ -35,6 +38,9 @@ final class RosselKafkaExtensionTest extends TestCase
         }
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     private function minimal(): array
     {
         return [
@@ -48,6 +54,36 @@ final class RosselKafkaExtensionTest extends TestCase
         $name = RosselKafkaBundle::BUNDLE_NAME.'.'.$suffix;
 
         return $this->container->getParameter($name);
+    }
+
+    /**
+     * @param array<string, mixed> $authFields
+     *
+     * @return array<string, mixed>
+     */
+    private function minimalWithAuth(array $authFields): array
+    {
+        return [
+            'broker' => [
+                'url' => 'kafka://localhost:9092',
+                'authentication' => $authFields,
+            ],
+            'producer' => ['app_name' => 'test-app'],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function minimalWithTopic(string $topicKey, string $topicName): array
+    {
+        return [
+            'broker' => [
+                'url' => 'kafka://localhost:9092',
+                'topics' => [$topicKey => $topicName],
+            ],
+            'producer' => ['app_name' => 'test-app'],
+        ];
     }
 
     // -------------------------------------------------------------------------
@@ -159,8 +195,7 @@ final class RosselKafkaExtensionTest extends TestCase
     #[Test]
     public function loadSetsSaslUsernameWhenProvided(): void
     {
-        $config = $this->minimal();
-        $config['broker']['authentication']['sasl_username'] = 'myuser';
+        $config = $this->minimalWithAuth(['sasl_username' => 'myuser']);
 
         $this->load($config);
 
@@ -170,8 +205,7 @@ final class RosselKafkaExtensionTest extends TestCase
     #[Test]
     public function loadSetsSaslPasswordWhenProvided(): void
     {
-        $config = $this->minimal();
-        $config['broker']['authentication']['sasl_password'] = 'secret';
+        $config = $this->minimalWithAuth(['sasl_password' => 'secret']);
 
         $this->load($config);
 
@@ -181,8 +215,7 @@ final class RosselKafkaExtensionTest extends TestCase
     #[Test]
     public function loadSetsCustomSaslMechanism(): void
     {
-        $config = $this->minimal();
-        $config['broker']['authentication']['sasl_mechanism'] = 'SCRAM-SHA-256';
+        $config = $this->minimalWithAuth(['sasl_mechanism' => 'SCRAM-SHA-256']);
 
         $this->load($config);
 
@@ -211,8 +244,7 @@ final class RosselKafkaExtensionTest extends TestCase
     #[DataProvider('nullableAuthFieldProvider')]
     public function loadNormalizesEmptyStringToNull(string $field): void
     {
-        $config = $this->minimal();
-        $config['broker']['authentication'][$field] = '';
+        $config = $this->minimalWithAuth([$field => '']);
 
         $this->load($config);
 
@@ -235,11 +267,11 @@ final class RosselKafkaExtensionTest extends TestCase
     #[Test]
     public function loadSetsTopicsWithValues(): void
     {
-        $config = $this->minimal();
-        $config['broker']['topics']['public_log_output_v1_json_delete'] = 'my.log.topic';
+        $config = $this->minimalWithTopic('public_log_output_v1_json_delete', 'my.log.topic');
 
         $this->load($config);
 
+        /** @var array<string, string|null> $topics */
         $topics = $this->param('broker.topics');
         self::assertSame('my.log.topic', $topics['public_log_output_v1_json_delete']);
     }

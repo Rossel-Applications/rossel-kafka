@@ -45,7 +45,10 @@ final class AreaTest extends TestCase
     #[Test]
     public function tryFromReturnsNullForInvalidValue(): void
     {
-        self::assertNull(Area::tryFrom('XX'));
+        /** @var non-empty-string $value */
+        $value = 'XX';
+        $result = Area::tryFrom($value);
+        self::assertNull($result);
     }
 
     #[Test]
