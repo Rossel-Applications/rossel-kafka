@@ -254,7 +254,6 @@ final class ConfigurationTest extends TestCase
      */
     private function process(array $config): array
     {
-        /** @var array<string, mixed> $result */
         return $this->processor->processConfiguration($this->configuration, [$config]);
     }
 
