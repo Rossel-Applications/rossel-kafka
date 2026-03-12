@@ -35,10 +35,6 @@ services:
     arguments:
       $topics: '%rossel_kafka.broker.topics%'
 
-  Rossel\RosselKafka\Service\KafkaTopicsFetcher:
-    arguments:
-      $topics: '%rossel_kafka.broker.topics%'
-
   Rossel\RosselKafka\Orchestrator\ConsumptionOrchestrator:
     $consumers: !tagged_iterator 'rossel_kafka.consumer'
     $appName: '%rossel_kafka.producer.app_name%'
