@@ -12,21 +12,21 @@ use Psr\Log\LoggerInterface;
 use Rossel\RosselKafka\Consumer\ConsumerInterface;
 use Rossel\RosselKafka\Enum\MessageHeaders\Area;
 use Rossel\RosselKafka\Enum\MessageHeaders\MessageType;
-use Rossel\RosselKafka\Factory\MessageFactory;
+use Rossel\RosselKafka\Factory\MessageFactoryInterface;
 use Rossel\RosselKafka\Model\Message;
 use Rossel\RosselKafka\Model\MessageHeaders;
 use Rossel\RosselKafka\Model\Topic;
-use Rossel\RosselKafka\Service\Connector\KafkaConnector;
+use Rossel\RosselKafka\Service\Connector\KafkaConnectorInterface;
 
-final readonly class ConsumptionOrchestrator
+final readonly class ConsumptionOrchestrator implements ConsumptionOrchestratorInterface
 {
     /**
      * @param iterable<ConsumerInterface> $consumers
      */
     public function __construct(
         private LoggerInterface $logger,
-        private KafkaConnector $kafkaConnector,
-        private MessageFactory $messageFactory,
+        private KafkaConnectorInterface $kafkaConnector,
+        private MessageFactoryInterface $messageFactory,
         private iterable $consumers,
         private string $appName,
     ) {

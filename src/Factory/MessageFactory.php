@@ -13,7 +13,7 @@ use Rossel\RosselKafka\Model\MessageHeaders;
 use Rossel\RosselKafka\Utils\ArrayUtils;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
-final readonly class MessageFactory
+final readonly class MessageFactory implements MessageFactoryInterface
 {
     public function __construct(
         private LoggerInterface $logger,
@@ -68,6 +68,9 @@ final readonly class MessageFactory
         /** @var string $version */
         $version = ArrayUtils::pull($headers, MessageHeaders::KEY_VERSION);
 
+        /** @var array<string, scalar> $additionalHeaders */
+        $additionalHeaders = $headers;
+
         return new MessageHeaders(
             area: Area::from($area),
             from: $from,
@@ -78,7 +81,7 @@ final readonly class MessageFactory
             fromOriginal: $fromOriginal,
             trackIdOriginal: $trackIdOriginal,
             version: $version,
-            additionalHeaders: $headers,
+            additionalHeaders: $additionalHeaders,
         );
     }
 
