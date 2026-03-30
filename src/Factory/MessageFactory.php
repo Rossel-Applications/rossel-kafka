@@ -92,8 +92,11 @@ final readonly class MessageFactory
         $this->logger->debug('Starting message body serialization...');
 
         try {
-            /** @var array<array-key, mixed> $decoded */
-            return json_decode($body, true, 512, \JSON_THROW_ON_ERROR);
+            $decoded = json_decode($body, true, 512, \JSON_THROW_ON_ERROR);
+            // assert() narrows the type for PHPStan without an inline @var that CS Fixer would strip.
+            \assert(\is_array($decoded) || \is_string($decoded));
+
+            return $decoded;
         } catch (\Exception) {
             $this->logger->debug('Message body cannot be serialized in json format. Returning a string body.');
         }

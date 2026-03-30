@@ -14,6 +14,7 @@ use Interop\Queue\Exception\InvalidDestinationException;
 use Interop\Queue\Exception\InvalidMessageException;
 use Rossel\RosselKafka\Model\MessageInterface;
 use Rossel\RosselKafka\Model\Topic;
+use Rossel\RosselKafka\Service\Ssl\SslCertificateProvider;
 
 final class KafkaConnector implements KafkaConnectorInterface
 {
@@ -27,8 +28,20 @@ final class KafkaConnector implements KafkaConnectorInterface
     public function __construct(
         string $brokerUrl,
         private string $appName,
+        private ?string $saslUsername,
+        private ?string $saslPassword,
+        private string $saslMechanism,
+        ?string $sslCaCertificateUrl,
+        ?string $sslCaCertificatePath,
+        ?string $sslClientCertificate,
+        ?string $sslClientKey,
+        private ?string $sslClientKeyPassword,
+        SslCertificateProvider $sslCertificateProvider,
     ) {
-        $this->rdKafkaContext = $this->buildContext($brokerUrl);
+        $resolvedCaCertPath = $sslCertificateProvider->resolve($sslCaCertificateUrl, $sslCaCertificatePath);
+        $resolvedClientCertPath = $sslCertificateProvider->resolvePem($sslClientCertificate, 'client_cert');
+        $resolvedClientKeyPath = $sslCertificateProvider->resolvePem($sslClientKey, 'client_key');
+        $this->rdKafkaContext = $this->buildContext($brokerUrl, $resolvedCaCertPath, $resolvedClientCertPath, $resolvedClientKeyPath);
         $this->rdKafkaProducer = $this->rdKafkaContext->createProducer();
     }
 
@@ -64,27 +77,62 @@ final class KafkaConnector implements KafkaConnectorInterface
         return $this->rdKafkaTopics[$topic->getName()] ??= $this->rdKafkaContext->createTopic($topic->getName());
     }
 
-    private function buildContext(string $brokerUrl): RdKafkaContext
+    private function buildContext(string $brokerUrl, ?string $resolvedCaCertPath, ?string $resolvedClientCertPath, ?string $resolvedClientKeyPath): RdKafkaContext
     {
-        return $this->buildConnectionFactory($brokerUrl)->createContext();
+        return $this->buildConnectionFactory($brokerUrl, $resolvedCaCertPath, $resolvedClientCertPath, $resolvedClientKeyPath)->createContext();
     }
 
-    private function buildConnectionFactory(string $brokerUrl): RdKafkaConnectionFactory
+    private function buildConnectionFactory(string $brokerUrl, ?string $resolvedCaCertPath, ?string $resolvedClientCertPath, ?string $resolvedClientKeyPath): RdKafkaConnectionFactory
     {
         $brokerUrl = str_replace('kafka://', '', $brokerUrl);
 
+        $hasSsl = null !== $resolvedCaCertPath || null !== $resolvedClientCertPath;
+        $hasSasl = null !== $this->saslUsername && null !== $this->saslPassword;
+
+        $securityProtocol = match (true) {
+            $hasSsl && $hasSasl => 'sasl_ssl',
+            $hasSasl => 'sasl_plaintext',
+            $hasSsl => 'ssl',
+            default => 'plaintext',
+        };
+
+        $globalConfig = [
+            'group.id' => $this->appName,
+            'metadata.broker.list' => $brokerUrl,
+            'enable.auto.commit' => 'true',
+            'auto.commit.interval.ms' => '5000',
+            'enable.idempotence' => 'true',
+            'retries' => '2147483647',
+            'linger.ms' => '100',
+            'batch.size' => '16384',
+            'fetch.min.bytes' => '1000',
+            'security.protocol' => $securityProtocol,
+        ];
+
+        if (null !== $resolvedCaCertPath) {
+            $globalConfig['ssl.ca.location'] = $resolvedCaCertPath;
+        }
+
+        if (null !== $resolvedClientCertPath) {
+            $globalConfig['ssl.certificate.location'] = $resolvedClientCertPath;
+        }
+
+        if (null !== $resolvedClientKeyPath) {
+            $globalConfig['ssl.key.location'] = $resolvedClientKeyPath;
+        }
+
+        if (null !== $this->sslClientKeyPassword) {
+            $globalConfig['ssl.key.password'] = $this->sslClientKeyPassword;
+        }
+
+        if ($hasSasl) {
+            $globalConfig['sasl.mechanism'] = $this->saslMechanism;
+            $globalConfig['sasl.username'] = $this->saslUsername;
+            $globalConfig['sasl.password'] = $this->saslPassword;
+        }
+
         return new RdKafkaConnectionFactory([
-            'global' => [
-                'group.id' => $this->appName,
-                'metadata.broker.list' => $brokerUrl,
-                'enable.auto.commit' => 'true',
-                'auto.commit.interval.ms' => '5s',
-                'enable.idempotence' => 'true',
-                'retries' => '2147483647',
-                'linger.ms' => '100',
-                'batch.size' => '16384',
-                'fetch.min.bytes' => '1000',
-            ],
+            'global' => $globalConfig,
             'topic' => [
                 'auto.offset.reset' => 'latest',
                 'request.required.acks' => 'all',
