@@ -12,60 +12,60 @@ use Rossel\RosselKafka\Model\Topic;
 final class KafkaTopicsFetcher implements KafkaTopicsFetcherInterface
 {
     private const KAFKA_TOPIC_MESSAGES_MAPPINGS = [
-        TopicConfigKeys::ACCOUNT_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->name => [
+        TopicConfigKeys::KAFKA_TOPIC_CORE_API_ACCOUNT_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->name => [
             MessageType::EXEC_SUCCESS,
             MessageType::EXEC_ERROR,
         ],
-        TopicConfigKeys::AUTHENTICATION_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->name => [
+        TopicConfigKeys::KAFKA_TOPIC_CORE_API_AUTHENTICATION_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->name => [
             MessageType::EXEC_SUCCESS,
             MessageType::EXEC_ERROR,
         ],
         /*
          * todo: add messages from old topic DEAD_LETTER (not documented in Event Catalog, but mentionned [here](https://rossel-applications.atlassian.net/wiki/spaces/MIT/pages/1196851201/Migration+cluster+Kafka))
          */
-        TopicConfigKeys::PUBLIC_DEAD_LETTER_INOUT_V1_JSON_DELETE_D30->name => [
+        TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_DEAD_LETTER_INOUT_V1_JSON_DELETE_D30->name => [
         ],
-        TopicConfigKeys::ERP_SUBSCRIPTION_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->name => [
+        TopicConfigKeys::KAFKA_TOPIC_CORE_API_ERP_SUBSCRIPTION_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->name => [
             MessageType::EXEC_SUCCESS,
             MessageType::EXEC_ERROR,
         ],
-        TopicConfigKeys::PUBLIC_INHERITANCE_OUTPUT_V1_JSON_DELETE->name => [
+        TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_INHERITANCE_OUTPUT_V1_JSON_DELETE->name => [
             MessageType::SYNC_B2C_INHERITANCE,
         ],
-        TopicConfigKeys::INHERITANCE_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->name => [
+        TopicConfigKeys::KAFKA_TOPIC_CORE_API_INHERITANCE_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->name => [
             MessageType::EXEC_SUCCESS,
             MessageType::EXEC_ERROR,
         ],
-        TopicConfigKeys::NOTIFICATION_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->name => [
+        TopicConfigKeys::KAFKA_TOPIC_CORE_API_NOTIFICATION_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->name => [
             MessageType::EXEC_SUCCESS,
             MessageType::EXEC_ERROR,
         ],
-        TopicConfigKeys::PUBLIC_NOTIFICATION_INPUT_V1_JSON_DELETE->name => [
+        TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_NOTIFICATION_INPUT_V1_JSON_DELETE->name => [
             MessageType::SEND_B2C_EMAIL_NOTIFICATION,
         ],
-        TopicConfigKeys::OFFER_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->name => [
+        TopicConfigKeys::KAFKA_TOPIC_CORE_API_OFFER_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->name => [
             MessageType::EXEC_SUCCESS,
             MessageType::EXEC_ERROR,
         ],
-        TopicConfigKeys::PUBLIC_OFFER_OUTPUT_V1_JSON_DELETE->name => [
+        TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_OFFER_OUTPUT_V1_JSON_DELETE->name => [
             MessageType::SYNC_B2C_ERP_OFFERS,
         ],
-        TopicConfigKeys::PROFILE_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->name => [
+        TopicConfigKeys::KAFKA_TOPIC_CORE_API_PROFILE_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->name => [
             MessageType::EXEC_SUCCESS,
             MessageType::EXEC_ERROR,
         ],
-        TopicConfigKeys::PURCHASE_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->name => [
+        TopicConfigKeys::KAFKA_TOPIC_CORE_API_PURCHASE_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->name => [
             MessageType::EXEC_SUCCESS,
             MessageType::EXEC_ERROR,
         ],
-        TopicConfigKeys::PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->name => [
+        TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->name => [
             MessageType::EXEC_SUCCESS,
             MessageType::EXEC_ERROR,
         ],
-        TopicConfigKeys::PUBLIC_OFFER_INPUT_V1_JSON_DELETE->name => [
+        TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_OFFER_INPUT_V1_JSON_DELETE->name => [
             MessageType::REQUEST_SYNC_B2C_ERP_OFFERS,
         ],
-        TopicConfigKeys::PUBLIC_SUBSCRIPTION_INPUT_V1_JSON_DELETE->name => [
+        TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_SUBSCRIPTION_INPUT_V1_JSON_DELETE->name => [
             MessageType::CANCEL_B2C_SUBSCRIPTION,
             MessageType::CHANGE_OFFER,
             MessageType::CREATE_OR_UPDATE_MOVING_ADDRESS,
@@ -79,21 +79,21 @@ final class KafkaTopicsFetcher implements KafkaTopicsFetcherInterface
             MessageType::REQUEST_SYNC_B2C_ERP_SUBSCRIPTION,
             MessageType::UPDATE_INVOICE_ADDRESS,
         ],
-        TopicConfigKeys::PUBLIC_SUBSCRIPTION_OUTPUT_V1_JSON_DELETE->name => [
+        TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_SUBSCRIPTION_OUTPUT_V1_JSON_DELETE->name => [
             MessageType::SYNC_B2C_ERP_SUBSCRIBED_SSO,
             MessageType::SYNC_B2C_ERP_SUBSCRIPTION,
             MessageType::SYNC_B2C_ERP_SUBSCRIPTION_PAYMENT_METHODS,
         ],
-        TopicConfigKeys::PUBLIC_CONTACT_INPUT_V1_JSON_DELETE->name => [
+        TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_CONTACT_INPUT_V1_JSON_DELETE->name => [
             MessageType::CREATE_OR_UPDATE_B2C_NON_ERP_SUBSCRIPTION,
             MessageType::CREATE_OR_UPDATE_B2C_PREFERENCES,
             MessageType::CREATE_OR_UPDATE_B2C_PROFILE,
         ],
-        TopicConfigKeys::INPUT_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->name => [
+        TopicConfigKeys::KAFKA_TOPIC_CORE_API_INPUT_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->name => [
             MessageType::EXEC_SUCCESS,
             MessageType::EXEC_ERROR,
         ],
-        TopicConfigKeys::OUTPUT_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->name => [
+        TopicConfigKeys::KAFKA_TOPIC_CORE_API_OUTPUT_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->name => [
             MessageType::EXEC_SUCCESS,
             MessageType::EXEC_ERROR,
         ],

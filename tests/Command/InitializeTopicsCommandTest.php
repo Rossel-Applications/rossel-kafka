@@ -69,13 +69,13 @@ final class InitializeTopicsCommandTest extends TestCase
     public function executeSucceedsWithTopicsConfigured(): void
     {
         $topic = new Topic(
-            configKey: TopicConfigKeys::PUBLIC_LOG_OUTPUT_V1_JSON_DELETE,
+            configKey: TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE,
             name: 'log.output.topic',
             messageTypes: [MessageType::EXEC_SUCCESS],
         );
 
         $this->fetcher->method('getAll')->willReturn([
-            TopicConfigKeys::PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->name => $topic,
+            TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->name => $topic,
         ]);
 
         // kafka-topics.sh won't exist, but the process will just fail quickly and be removed
@@ -89,8 +89,8 @@ final class InitializeTopicsCommandTest extends TestCase
     {
         $topics = [];
         foreach ([
-            TopicConfigKeys::PUBLIC_LOG_OUTPUT_V1_JSON_DELETE,
-            TopicConfigKeys::PUBLIC_SUBSCRIPTION_INPUT_V1_JSON_DELETE,
+            TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE,
+            TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_SUBSCRIPTION_INPUT_V1_JSON_DELETE,
         ] as $configKey) {
             $topics[$configKey->name] = new Topic(
                 configKey: $configKey,

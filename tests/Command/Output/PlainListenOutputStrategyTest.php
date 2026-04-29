@@ -28,7 +28,7 @@ final class PlainListenOutputStrategyTest extends TestCase
         $this->output = $this->createMock(OutputInterface::class);
         $this->strategy = new PlainListenOutputStrategy($this->output);
         $this->topic = new Topic(
-            configKey: TopicConfigKeys::PUBLIC_LOG_OUTPUT_V1_JSON_DELETE,
+            configKey: TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE,
             name: 'public.log.output',
         );
     }
@@ -91,7 +91,7 @@ final class PlainListenOutputStrategyTest extends TestCase
     public function onStartIncludesTopicName(): void
     {
         $topic = new Topic(
-            configKey: TopicConfigKeys::PUBLIC_SUBSCRIPTION_INPUT_V1_JSON_DELETE,
+            configKey: TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_SUBSCRIPTION_INPUT_V1_JSON_DELETE,
             name: 'my.custom.topic',
         );
 
