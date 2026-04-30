@@ -53,7 +53,7 @@ final class ConsumptionOrchestratorTest extends TestCase
         $this->rdKafkaConsumer = $this->createMock(RdKafkaConsumer::class);
 
         $this->topic = new Topic(
-            configKey: TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE,
+            configKey: TopicConfigKeys::KAFKA_TOPIC_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE,
             name: 'log.output.topic',
             messageTypes: [MessageType::EXEC_SUCCESS, MessageType::EXEC_ERROR, MessageType::LOG],
         );

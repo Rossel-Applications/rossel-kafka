@@ -23,7 +23,7 @@ final class KafkaTopicsFetcherTest extends TestCase
     public function constructorIgnoresNullTopics(): void
     {
         $fetcher = new KafkaTopicsFetcher([
-            TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->value => null,
+            TopicConfigKeys::KAFKA_TOPIC_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->value => null,
         ]);
 
         self::assertEmpty($fetcher->getAll());
@@ -33,7 +33,7 @@ final class KafkaTopicsFetcherTest extends TestCase
     public function constructorIgnoresEmptyStringTopics(): void
     {
         $fetcher = new KafkaTopicsFetcher([
-            TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->value => '',
+            TopicConfigKeys::KAFKA_TOPIC_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->value => '',
         ]);
 
         self::assertEmpty($fetcher->getAll());
@@ -43,7 +43,7 @@ final class KafkaTopicsFetcherTest extends TestCase
     public function constructorInitializesConfiguredTopics(): void
     {
         $fetcher = new KafkaTopicsFetcher([
-            TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->value => 'public.log.output',
+            TopicConfigKeys::KAFKA_TOPIC_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->value => 'public.log.output',
         ]);
 
         self::assertCount(1, $fetcher->getAll());
@@ -53,9 +53,9 @@ final class KafkaTopicsFetcherTest extends TestCase
     public function constructorSkipsNullAndKeepsValid(): void
     {
         $fetcher = new KafkaTopicsFetcher([
-            TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->value => 'public.log.output',
-            TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_DEAD_LETTER_INOUT_V1_JSON_DELETE_D30->value => null,
-            TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_SUBSCRIPTION_INPUT_V1_JSON_DELETE->value => 'subscriptions.input',
+            TopicConfigKeys::KAFKA_TOPIC_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->value => 'public.log.output',
+            TopicConfigKeys::KAFKA_TOPIC_PUBLIC_DEAD_LETTER_INOUT_V1_JSON_DELETE_D30->value => null,
+            TopicConfigKeys::KAFKA_TOPIC_PUBLIC_SUBSCRIPTION_INPUT_V1_JSON_DELETE->value => 'subscriptions.input',
         ]);
 
         self::assertCount(2, $fetcher->getAll());
@@ -69,14 +69,14 @@ final class KafkaTopicsFetcherTest extends TestCase
     public function getReturnsTopicForConfiguredKey(): void
     {
         $fetcher = new KafkaTopicsFetcher([
-            TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->value => 'public.log.output',
+            TopicConfigKeys::KAFKA_TOPIC_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->value => 'public.log.output',
         ]);
 
-        $topic = $fetcher->get(TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE);
+        $topic = $fetcher->get(TopicConfigKeys::KAFKA_TOPIC_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE);
 
         self::assertInstanceOf(Topic::class, $topic);
         self::assertSame('public.log.output', $topic->getName());
-        self::assertSame(TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE, $topic->getConfigKey());
+        self::assertSame(TopicConfigKeys::KAFKA_TOPIC_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE, $topic->getConfigKey());
     }
 
     #[Test]
@@ -86,19 +86,19 @@ final class KafkaTopicsFetcherTest extends TestCase
 
         $this->expectException(UnconfiguredTopicException::class);
 
-        $fetcher->get(TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE);
+        $fetcher->get(TopicConfigKeys::KAFKA_TOPIC_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE);
     }
 
     #[Test]
     public function getThrowsWhenTopicWasNullInConfig(): void
     {
         $fetcher = new KafkaTopicsFetcher([
-            TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->value => null,
+            TopicConfigKeys::KAFKA_TOPIC_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->value => null,
         ]);
 
         $this->expectException(UnconfiguredTopicException::class);
 
-        $fetcher->get(TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE);
+        $fetcher->get(TopicConfigKeys::KAFKA_TOPIC_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE);
     }
 
     // -------------------------------------------------------------------------
@@ -117,15 +117,15 @@ final class KafkaTopicsFetcherTest extends TestCase
     public function getAllReturnsAllConfiguredTopicsIndexedByEnumName(): void
     {
         $fetcher = new KafkaTopicsFetcher([
-            TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->value => 'log.topic',
-            TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_SUBSCRIPTION_INPUT_V1_JSON_DELETE->value => 'sub.input.topic',
+            TopicConfigKeys::KAFKA_TOPIC_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->value => 'log.topic',
+            TopicConfigKeys::KAFKA_TOPIC_PUBLIC_SUBSCRIPTION_INPUT_V1_JSON_DELETE->value => 'sub.input.topic',
         ]);
 
         $all = $fetcher->getAll();
 
-        self::assertArrayHasKey(TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->name, $all);
-        self::assertArrayHasKey(TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_SUBSCRIPTION_INPUT_V1_JSON_DELETE->name, $all);
-        self::assertSame('log.topic', $all[TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->name]->getName());
+        self::assertArrayHasKey(TopicConfigKeys::KAFKA_TOPIC_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->name, $all);
+        self::assertArrayHasKey(TopicConfigKeys::KAFKA_TOPIC_PUBLIC_SUBSCRIPTION_INPUT_V1_JSON_DELETE->name, $all);
+        self::assertSame('log.topic', $all[TopicConfigKeys::KAFKA_TOPIC_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->name]->getName());
     }
 
     // -------------------------------------------------------------------------
@@ -137,7 +137,7 @@ final class KafkaTopicsFetcherTest extends TestCase
     {
         $fetcher = new KafkaTopicsFetcher([
             // This topic supports EXEC_SUCCESS and EXEC_ERROR
-            TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->value => 'log.topic',
+            TopicConfigKeys::KAFKA_TOPIC_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->value => 'log.topic',
         ]);
 
         $topics = $fetcher->getByMessageType(MessageType::EXEC_SUCCESS);
@@ -151,7 +151,7 @@ final class KafkaTopicsFetcherTest extends TestCase
     {
         $fetcher = new KafkaTopicsFetcher([
             // This topic supports EXEC_SUCCESS and EXEC_ERROR only
-            TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->value => 'log.topic',
+            TopicConfigKeys::KAFKA_TOPIC_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->value => 'log.topic',
         ]);
 
         $topics = $fetcher->getByMessageType(MessageType::CANCEL_B2C_SUBSCRIPTION);
@@ -163,8 +163,8 @@ final class KafkaTopicsFetcherTest extends TestCase
     public function getByMessageTypeReturnsMultipleMatchingTopics(): void
     {
         $fetcher = new KafkaTopicsFetcher([
-            TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->value => 'log.topic',
-            TopicConfigKeys::KAFKA_TOPIC_CORE_API_ACCOUNT_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->value => 'account.log.topic',
+            TopicConfigKeys::KAFKA_TOPIC_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->value => 'log.topic',
+            TopicConfigKeys::KAFKA_TOPIC_ACCOUNT_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->value => 'account.log.topic',
         ]);
 
         // Both topics support EXEC_SUCCESS
@@ -183,23 +183,23 @@ final class KafkaTopicsFetcherTest extends TestCase
     public static function topicMessageTypeMappingProvider(): iterable
     {
         yield 'subscription input supports CANCEL_B2C_SUBSCRIPTION' => [
-            TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_SUBSCRIPTION_INPUT_V1_JSON_DELETE,
+            TopicConfigKeys::KAFKA_TOPIC_PUBLIC_SUBSCRIPTION_INPUT_V1_JSON_DELETE,
             MessageType::CANCEL_B2C_SUBSCRIPTION,
         ];
         yield 'subscription output supports SYNC_B2C_ERP_SUBSCRIPTION' => [
-            TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_SUBSCRIPTION_OUTPUT_V1_JSON_DELETE,
+            TopicConfigKeys::KAFKA_TOPIC_PUBLIC_SUBSCRIPTION_OUTPUT_V1_JSON_DELETE,
             MessageType::SYNC_B2C_ERP_SUBSCRIPTION,
         ];
         yield 'notification input supports SEND_B2C_EMAIL_NOTIFICATION' => [
-            TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_NOTIFICATION_INPUT_V1_JSON_DELETE,
+            TopicConfigKeys::KAFKA_TOPIC_PUBLIC_NOTIFICATION_INPUT_V1_JSON_DELETE,
             MessageType::SEND_B2C_EMAIL_NOTIFICATION,
         ];
         yield 'inheritance output supports SYNC_B2C_INHERITANCE' => [
-            TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_INHERITANCE_OUTPUT_V1_JSON_DELETE,
+            TopicConfigKeys::KAFKA_TOPIC_PUBLIC_INHERITANCE_OUTPUT_V1_JSON_DELETE,
             MessageType::SYNC_B2C_INHERITANCE,
         ];
         yield 'offer output supports SYNC_B2C_ERP_OFFERS' => [
-            TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_OFFER_OUTPUT_V1_JSON_DELETE,
+            TopicConfigKeys::KAFKA_TOPIC_PUBLIC_OFFER_OUTPUT_V1_JSON_DELETE,
             MessageType::SYNC_B2C_ERP_OFFERS,
         ];
     }

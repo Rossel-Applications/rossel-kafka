@@ -183,8 +183,8 @@ final class ConfigurationTest extends TestCase
             RootConfigKeys::BROKER->value => [
                 BrokerConfigKeys::URL->value => 'kafka://host:9092',
                 BrokerConfigKeys::TOPICS->value => [
-                    TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->value => 'my.log.topic',
-                    TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_SUBSCRIPTION_INPUT_V1_JSON_DELETE->value => 'my.sub.topic',
+                    TopicConfigKeys::KAFKA_TOPIC_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->value => 'my.log.topic',
+                    TopicConfigKeys::KAFKA_TOPIC_PUBLIC_SUBSCRIPTION_INPUT_V1_JSON_DELETE->value => 'my.sub.topic',
                 ],
             ],
             RootConfigKeys::PRODUCER->value => [ProducerConfigKeys::APP_NAME->value => 'app'],
@@ -195,8 +195,8 @@ final class ConfigurationTest extends TestCase
         /** @var array<string, string|null> $topics */
         $topics = $broker[BrokerConfigKeys::TOPICS->value];
 
-        self::assertSame('my.log.topic', $topics[TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->value]);
-        self::assertSame('my.sub.topic', $topics[TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_SUBSCRIPTION_INPUT_V1_JSON_DELETE->value]);
+        self::assertSame('my.log.topic', $topics[TopicConfigKeys::KAFKA_TOPIC_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->value]);
+        self::assertSame('my.sub.topic', $topics[TopicConfigKeys::KAFKA_TOPIC_PUBLIC_SUBSCRIPTION_INPUT_V1_JSON_DELETE->value]);
     }
 
     /**

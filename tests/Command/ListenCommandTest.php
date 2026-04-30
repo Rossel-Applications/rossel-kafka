@@ -46,11 +46,11 @@ final class ListenCommandTest extends TestCase
         );
 
         $this->logTopic = new Topic(
-            configKey: TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE,
+            configKey: TopicConfigKeys::KAFKA_TOPIC_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE,
             name: 'log.output',
         );
         $this->subTopic = new Topic(
-            configKey: TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_SUBSCRIPTION_INPUT_V1_JSON_DELETE,
+            configKey: TopicConfigKeys::KAFKA_TOPIC_PUBLIC_SUBSCRIPTION_INPUT_V1_JSON_DELETE,
             name: 'sub.input',
         );
     }
@@ -118,7 +118,7 @@ final class ListenCommandTest extends TestCase
     {
         $this->fetcher
             ->method('get')
-            ->with(TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE)
+            ->with(TopicConfigKeys::KAFKA_TOPIC_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE)
             ->willReturn($this->logTopic);
 
         $this->orchestrator
@@ -133,7 +133,7 @@ final class ListenCommandTest extends TestCase
 
         $tester = new CommandTester($this->command);
         $exitCode = $tester->execute([
-            '--topics' => TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->value,
+            '--topics' => TopicConfigKeys::KAFKA_TOPIC_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->value,
         ]);
 
         self::assertSame(Command::SUCCESS, $exitCode);
@@ -171,7 +171,7 @@ final class ListenCommandTest extends TestCase
 
         $tester = new CommandTester($this->command);
         $exitCode = $tester->execute([
-            '--topics' => TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->value,
+            '--topics' => TopicConfigKeys::KAFKA_TOPIC_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->value,
         ]);
 
         self::assertSame(Command::FAILURE, $exitCode);
@@ -187,16 +187,16 @@ final class ListenCommandTest extends TestCase
         $this->fetcher
             ->method('get')
             ->willReturnMap([
-                [TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE, $this->logTopic],
-                [TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_SUBSCRIPTION_INPUT_V1_JSON_DELETE, $this->subTopic],
+                [TopicConfigKeys::KAFKA_TOPIC_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE, $this->logTopic],
+                [TopicConfigKeys::KAFKA_TOPIC_PUBLIC_SUBSCRIPTION_INPUT_V1_JSON_DELETE, $this->subTopic],
             ]);
 
         // Two topics → multi-topic mode (parallel). The processes will exit immediately
         // since 'php bin/console' won't exist, but the command still returns SUCCESS.
         $tester = new CommandTester($this->command);
         $exitCode = $tester->execute([
-            '--topics' => TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->value
-                .','.TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_SUBSCRIPTION_INPUT_V1_JSON_DELETE->value,
+            '--topics' => TopicConfigKeys::KAFKA_TOPIC_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->value
+                .','.TopicConfigKeys::KAFKA_TOPIC_PUBLIC_SUBSCRIPTION_INPUT_V1_JSON_DELETE->value,
         ]);
 
         self::assertSame(Command::SUCCESS, $exitCode);
@@ -207,14 +207,14 @@ final class ListenCommandTest extends TestCase
     {
         $this->fetcher
             ->method('get')
-            ->with(TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE)
+            ->with(TopicConfigKeys::KAFKA_TOPIC_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE)
             ->willReturn($this->logTopic);
 
         $this->orchestrator->method('listen');
 
         $tester = new CommandTester($this->command);
         $exitCode = $tester->execute([
-            '--topics' => ' '.TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->value.' ',
+            '--topics' => ' '.TopicConfigKeys::KAFKA_TOPIC_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->value.' ',
         ]);
 
         self::assertSame(Command::SUCCESS, $exitCode);
@@ -229,7 +229,7 @@ final class ListenCommandTest extends TestCase
     {
         $this->fetcher
             ->method('get')
-            ->with(TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE)
+            ->with(TopicConfigKeys::KAFKA_TOPIC_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE)
             ->willReturn($this->logTopic);
 
         $this->orchestrator->expects($this->once())->method('listen');
@@ -238,7 +238,7 @@ final class ListenCommandTest extends TestCase
         // setInputs([]) triggers non-interactive mode in CommandTester
         $tester->setInputs([]);
         $exitCode = $tester->execute(
-            ['--topics' => TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->value],
+            ['--topics' => TopicConfigKeys::KAFKA_TOPIC_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->value],
             ['decorated' => false],
         );
 

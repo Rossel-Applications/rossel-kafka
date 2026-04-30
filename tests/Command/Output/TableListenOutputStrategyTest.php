@@ -32,7 +32,7 @@ final class TableListenOutputStrategyTest extends TestCase
         $this->strategy = new TableListenOutputStrategy($this->output);
 
         $this->topic = new Topic(
-            configKey: TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE,
+            configKey: TopicConfigKeys::KAFKA_TOPIC_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE,
             name: 'log.output',
         );
     }

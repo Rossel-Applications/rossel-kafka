@@ -24,8 +24,8 @@ final class ExceptionsTest extends TestCase
      */
     public static function topicConfigKeysProvider(): iterable
     {
-        yield 'log output' => [TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE];
-        yield 'subscription input' => [TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_SUBSCRIPTION_INPUT_V1_JSON_DELETE];
+        yield 'log output' => [TopicConfigKeys::KAFKA_TOPIC_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE];
+        yield 'subscription input' => [TopicConfigKeys::KAFKA_TOPIC_PUBLIC_SUBSCRIPTION_INPUT_V1_JSON_DELETE];
     }
 
     #[Test]
@@ -49,7 +49,7 @@ final class ExceptionsTest extends TestCase
     #[Test]
     public function unconfiguredTopicExceptionExtendsRuntimeException(): void
     {
-        $exception = new UnconfiguredTopicException(TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE);
+        $exception = new UnconfiguredTopicException(TopicConfigKeys::KAFKA_TOPIC_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE);
 
         self::assertInstanceOf(\RuntimeException::class, $exception);
     }
@@ -57,7 +57,7 @@ final class ExceptionsTest extends TestCase
     #[Test]
     public function unconfiguredTopicExceptionMessageFormat(): void
     {
-        $key = TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE;
+        $key = TopicConfigKeys::KAFKA_TOPIC_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE;
         $exception = new UnconfiguredTopicException($key);
 
         self::assertStringContainsString('not configured', $exception->getMessage());
@@ -83,7 +83,7 @@ final class ExceptionsTest extends TestCase
     public function unsupportedTopicExceptionMessageContainsTopicName(string $topicName, MessageType $messageType): void
     {
         $topic = new Topic(
-            configKey: TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE,
+            configKey: TopicConfigKeys::KAFKA_TOPIC_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE,
             name: $topicName,
         );
 
@@ -97,7 +97,7 @@ final class ExceptionsTest extends TestCase
     public function unsupportedTopicExceptionMessageContainsMessageTypeName(string $topicName, MessageType $messageType): void
     {
         $topic = new Topic(
-            configKey: TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE,
+            configKey: TopicConfigKeys::KAFKA_TOPIC_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE,
             name: $topicName,
         );
 
@@ -110,7 +110,7 @@ final class ExceptionsTest extends TestCase
     public function unsupportedTopicExceptionExtendsRuntimeException(): void
     {
         $topic = new Topic(
-            configKey: TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE,
+            configKey: TopicConfigKeys::KAFKA_TOPIC_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE,
             name: 'test.topic',
         );
 
@@ -123,7 +123,7 @@ final class ExceptionsTest extends TestCase
     public function unsupportedTopicExceptionMessageFormat(): void
     {
         $topic = new Topic(
-            configKey: TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE,
+            configKey: TopicConfigKeys::KAFKA_TOPIC_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE,
             name: 'test.topic',
         );
 

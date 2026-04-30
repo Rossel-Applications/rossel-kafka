@@ -21,12 +21,12 @@ final class TopicTest extends TestCase
     public function gettersReturnConstructorValues(): void
     {
         $topic = new Topic(
-            configKey: TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE,
+            configKey: TopicConfigKeys::KAFKA_TOPIC_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE,
             name: 'my.kafka.topic',
             messageTypes: [MessageType::EXEC_SUCCESS],
         );
 
-        self::assertSame(TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE, $topic->getConfigKey());
+        self::assertSame(TopicConfigKeys::KAFKA_TOPIC_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE, $topic->getConfigKey());
         self::assertSame('my.kafka.topic', $topic->getName());
         self::assertSame([MessageType::EXEC_SUCCESS], $topic->getMessageTypes());
     }
@@ -35,7 +35,7 @@ final class TopicTest extends TestCase
     public function messageTypesDefaultsToEmptyArray(): void
     {
         $topic = new Topic(
-            configKey: TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE,
+            configKey: TopicConfigKeys::KAFKA_TOPIC_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE,
             name: 'topic.name',
         );
 
@@ -50,7 +50,7 @@ final class TopicTest extends TestCase
     public function supportsMessageTypeReturnsTrueForIncludedType(): void
     {
         $topic = new Topic(
-            configKey: TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE,
+            configKey: TopicConfigKeys::KAFKA_TOPIC_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE,
             name: 'topic',
             messageTypes: [MessageType::EXEC_SUCCESS, MessageType::EXEC_ERROR],
         );
@@ -63,7 +63,7 @@ final class TopicTest extends TestCase
     public function supportsMessageTypeReturnsFalseForExcludedType(): void
     {
         $topic = new Topic(
-            configKey: TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE,
+            configKey: TopicConfigKeys::KAFKA_TOPIC_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE,
             name: 'topic',
             messageTypes: [MessageType::EXEC_SUCCESS],
         );
@@ -76,7 +76,7 @@ final class TopicTest extends TestCase
     public function supportsMessageTypeReturnsFalseForEmptyTypes(): void
     {
         $topic = new Topic(
-            configKey: TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_DEAD_LETTER_INOUT_V1_JSON_DELETE_D30,
+            configKey: TopicConfigKeys::KAFKA_TOPIC_PUBLIC_DEAD_LETTER_INOUT_V1_JSON_DELETE_D30,
             name: 'dead-letter',
             messageTypes: [],
         );
@@ -101,7 +101,7 @@ final class TopicTest extends TestCase
     public function supportsMessageTypeDataset(MessageType $type, bool $expected): void
     {
         $topic = new Topic(
-            configKey: TopicConfigKeys::KAFKA_TOPIC_CORE_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE,
+            configKey: TopicConfigKeys::KAFKA_TOPIC_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE,
             name: 'log-topic',
             messageTypes: [MessageType::EXEC_SUCCESS, MessageType::EXEC_ERROR],
         );
