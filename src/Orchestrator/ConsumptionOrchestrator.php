@@ -10,47 +10,50 @@ use Interop\Queue\Exception\InvalidDestinationException;
 use Interop\Queue\Exception\InvalidMessageException;
 use Psr\Log\LoggerInterface;
 use Rossel\RosselKafka\Consumer\ConsumerInterface;
-use Rossel\RosselKafka\Enum\Infrastructure\KafkaTopic;
+use Rossel\RosselKafka\Enum\MessageHeaders\Area;
 use Rossel\RosselKafka\Enum\MessageHeaders\MessageType;
-use Rossel\RosselKafka\Factory\MessageFactory;
+use Rossel\RosselKafka\Factory\MessageFactoryInterface;
 use Rossel\RosselKafka\Model\Message;
 use Rossel\RosselKafka\Model\MessageHeaders;
-use Rossel\RosselKafka\Service\Connector\KafkaConnector;
+use Rossel\RosselKafka\Model\Topic;
+use Rossel\RosselKafka\Service\Connector\KafkaConnectorInterface;
 
-final readonly class ConsumptionOrchestrator
+final readonly class ConsumptionOrchestrator implements ConsumptionOrchestratorInterface
 {
     /**
      * @param iterable<ConsumerInterface> $consumers
      */
     public function __construct(
         private LoggerInterface $logger,
-        private KafkaConnector $kafkaConnector,
-        private MessageFactory $messageFactory,
+        private KafkaConnectorInterface $kafkaConnector,
+        private MessageFactoryInterface $messageFactory,
         private iterable $consumers,
         private string $appName,
     ) {
     }
 
     public function listen(
-        KafkaTopic $topic,
+        Topic $topic,
         ?\Closure $onStartCallable = null,
+        ?\Closure $onIdleCallable = null,
+        ?\Closure $onMessageCallable = null,
     ): void {
         if (null !== $onStartCallable) {
             $this->logger->debug('Executing onStartCallable before consumer creation.');
             $onStartCallable($topic);
         }
 
-        $this->logger->info(\sprintf('Initializing Kafka consumer for topic "%s"...', $topic->name));
+        $this->logger->info(\sprintf('Initializing Kafka consumer for topic "%s"...', $topic->getName()));
 
-        $this->logger->debug(\sprintf('Creating consumer for topic %s...', $topic->name));
+        $this->logger->debug(\sprintf('Creating consumer for topic %s...', $topic->getName()));
         $consumer = $this->kafkaConnector->createConsumer($topic);
-        $this->logger->debug(\sprintf('Consumer for topic %s successfully created.', $topic->name));
+        $this->logger->debug(\sprintf('Consumer for topic %s successfully created.', $topic->getName()));
 
-        $this->logger->info(\sprintf('Consumer is now listening on topic "%s".', $topic->name));
+        $this->logger->info(\sprintf('Consumer is now listening on topic "%s".', $topic->getName()));
 
         /* @phpstan-ignore while.alwaysTrue */
         while (true) {
-            $message = $consumer->receive(1000);
+            $message = $consumer->receive(200);
 
             if ($message instanceof RdKafkaMessage) {
                 $this->logger->info(
@@ -66,13 +69,21 @@ final readonly class ConsumptionOrchestrator
 
                 // Marque le message comme "traité"
                 $consumer->acknowledge($message);
+
+                if (null !== $onMessageCallable) {
+                    $onMessageCallable($topic, $rosselMessage->getType());
+                }
+            } else {
+                if (null !== $onIdleCallable) {
+                    $onIdleCallable($topic);
+                }
             }
         }
     }
 
     private function processRosselMessage(
         Message $message,
-        KafkaTopic $topic,
+        Topic $topic,
     ): void {
         $messageId = $message->getRdKafkaMessage()->getMessageId();
 
@@ -93,11 +104,11 @@ final readonly class ConsumptionOrchestrator
             \sprintf(
                 'No consumer found for message type %s and topic %s',
                 $message->getType()->name,
-                $topic->name,
+                $topic->getName(),
             ),
             [
                 'id' => $messageId,
-                'topic' => $topic->name,
+                'topic' => $topic->getName(),
                 'type' => $message->getType()->name,
             ]
         );
@@ -112,7 +123,7 @@ final readonly class ConsumptionOrchestrator
     private function tryConsumer(
         ConsumerInterface $consumer,
         Message $message,
-        KafkaTopic $topic,
+        Topic $topic,
     ): bool {
         $messageId = $message->getRdKafkaMessage()->getMessageId();
 
@@ -174,13 +185,21 @@ final readonly class ConsumptionOrchestrator
      */
     private function sendLogMessage(
         Message $originalMessage,
-        KafkaTopic $topic,
+        Topic $topic,
         bool $success,
     ): void {
         $originalHeaders = $originalMessage->getRdKafkaMessage()->getHeaders();
 
-        $area = $originalHeaders[MessageHeaders::KEY_AREA];
-        $trackId = $originalHeaders[MessageHeaders::KEY_TRACK_ID];
+        $areaValue = $originalHeaders[MessageHeaders::KEY_AREA];
+        $area = Area::from(\is_string($areaValue) ? $areaValue : '');
+
+        $trackId = null;
+
+        if (\array_key_exists(MessageHeaders::KEY_TRACK_ID, $originalHeaders)
+            && \is_string($originalHeaders[MessageHeaders::KEY_TRACK_ID])
+        ) {
+            $trackId = $originalHeaders[MessageHeaders::KEY_TRACK_ID];
+        }
 
         $message = new Message(
             new MessageHeaders(

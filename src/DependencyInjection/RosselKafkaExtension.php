@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Rossel\RosselKafka\DependencyInjection;
 
 use Rossel\RosselKafka\Consumer\ConsumerInterface;
+use Rossel\RosselKafka\Enum\Config\Broker\BrokerConfigKeys;
 use Rossel\RosselKafka\Enum\Config\Producer\ProducerConfigKeys;
 use Rossel\RosselKafka\Enum\Config\RootConfigKeys;
 use Rossel\RosselKafka\RosselKafkaBundle;
@@ -22,10 +23,47 @@ final class RosselKafkaExtension extends Extension implements PrependExtensionIn
     public function load(array $configs, ContainerBuilder $container): void
     {
         $configuration = new Configuration();
+        /**
+         * @var array{
+         *   broker: array{
+         *     url: string,
+         *     topics: array<string, string|null>,
+         *     authentication: array{
+         *       sasl_username: string|null,
+         *       sasl_password: string|null,
+         *       sasl_mechanism: string,
+         *       ssl_ca_certificate_url: string|null,
+         *       ssl_ca_certificate_path: string|null,
+         *       ssl_client_certificate: string|null,
+         *       ssl_client_key: string|null,
+         *       ssl_client_key_password: string|null,
+         *     },
+         *   },
+         *   producer: array{app_name: string}
+         * } $config
+         */
         $config = $this->processConfiguration($configuration, $configs);
 
-        $container->setParameter(RosselKafkaBundle::BUNDLE_NAME.'.'.RootConfigKeys::BROKER_URL->value, $config[RootConfigKeys::BROKER_URL->value]);
-        $container->setParameter(RosselKafkaBundle::BUNDLE_NAME.'.'.RootConfigKeys::PRODUCER->value.'.'.ProducerConfigKeys::APP_NAME->value, $config[RootConfigKeys::PRODUCER->value][ProducerConfigKeys::APP_NAME->value]);
+        $brokerConfig = $config[RootConfigKeys::BROKER->value];
+        $bundleName = RosselKafkaBundle::BUNDLE_NAME;
+        $brokerKey = RootConfigKeys::BROKER->value;
+        $authKey = BrokerConfigKeys::AUTHENTICATION->value;
+        $authConfig = $brokerConfig[$authKey];
+
+        // Normalizes empty strings (from unset env vars) to null for optional parameters.
+        $nullable = static fn (?string $v): ?string => (null === $v || '' === $v) ? null : $v;
+
+        $container->setParameter($bundleName.'.'.$brokerKey.'.'.BrokerConfigKeys::URL->value, $brokerConfig[BrokerConfigKeys::URL->value]);
+        $container->setParameter($bundleName.'.'.$brokerKey.'.'.BrokerConfigKeys::TOPICS->value, $brokerConfig[BrokerConfigKeys::TOPICS->value]);
+        $container->setParameter($bundleName.'.'.$brokerKey.'.'.$authKey.'.'.BrokerConfigKeys::SASL_USERNAME->value, $nullable($authConfig[BrokerConfigKeys::SASL_USERNAME->value]));
+        $container->setParameter($bundleName.'.'.$brokerKey.'.'.$authKey.'.'.BrokerConfigKeys::SASL_PASSWORD->value, $nullable($authConfig[BrokerConfigKeys::SASL_PASSWORD->value]));
+        $container->setParameter($bundleName.'.'.$brokerKey.'.'.$authKey.'.'.BrokerConfigKeys::SASL_MECHANISM->value, $nullable($authConfig[BrokerConfigKeys::SASL_MECHANISM->value]) ?? 'PLAIN');
+        $container->setParameter($bundleName.'.'.$brokerKey.'.'.$authKey.'.'.BrokerConfigKeys::SSL_CA_CERTIFICATE_URL->value, $nullable($authConfig[BrokerConfigKeys::SSL_CA_CERTIFICATE_URL->value]));
+        $container->setParameter($bundleName.'.'.$brokerKey.'.'.$authKey.'.'.BrokerConfigKeys::SSL_CA_CERTIFICATE_PATH->value, $nullable($authConfig[BrokerConfigKeys::SSL_CA_CERTIFICATE_PATH->value]));
+        $container->setParameter($bundleName.'.'.$brokerKey.'.'.$authKey.'.'.BrokerConfigKeys::SSL_CLIENT_CERTIFICATE->value, $nullable($authConfig[BrokerConfigKeys::SSL_CLIENT_CERTIFICATE->value]));
+        $container->setParameter($bundleName.'.'.$brokerKey.'.'.$authKey.'.'.BrokerConfigKeys::SSL_CLIENT_KEY->value, $nullable($authConfig[BrokerConfigKeys::SSL_CLIENT_KEY->value]));
+        $container->setParameter($bundleName.'.'.$brokerKey.'.'.$authKey.'.'.BrokerConfigKeys::SSL_CLIENT_KEY_PASSWORD->value, $nullable($authConfig[BrokerConfigKeys::SSL_CLIENT_KEY_PASSWORD->value]));
+        $container->setParameter($bundleName.'.'.RootConfigKeys::PRODUCER->value.'.'.ProducerConfigKeys::APP_NAME->value, $config[RootConfigKeys::PRODUCER->value][ProducerConfigKeys::APP_NAME->value]);
 
         $container
             ->registerForAutoconfiguration(ConsumerInterface::class)
@@ -50,15 +88,6 @@ final class RosselKafkaExtension extends Extension implements PrependExtensionIn
             return;
         }
 
-        $baseConfig = $container->getExtensionConfig('enqueue');
-
-        if (!\array_key_exists('default', $baseConfig)) {
-            $baseConfig = [
-                'default' => [
-                ],
-            ];
-        }
-
         $brokerUrl = null;
 
         /** @var array<array-key, mixed> $rosselKafkaConfig */
@@ -66,15 +95,19 @@ final class RosselKafkaExtension extends Extension implements PrependExtensionIn
 
         foreach ($rosselKafkaConfig as $configParametersGroup) {
             if (\is_array($configParametersGroup)
-                && \array_key_exists(RootConfigKeys::BROKER_URL->value, $configParametersGroup)
+                && \array_key_exists(RootConfigKeys::BROKER->value, $configParametersGroup)
+                && \is_array($configParametersGroup[RootConfigKeys::BROKER->value])
+                && \array_key_exists(BrokerConfigKeys::URL->value, $configParametersGroup[RootConfigKeys::BROKER->value])
             ) {
-                $brokerUrl = $configParametersGroup[RootConfigKeys::BROKER_URL->value];
+                $brokerUrl = $configParametersGroup[RootConfigKeys::BROKER->value][BrokerConfigKeys::URL->value];
             }
         }
 
-        $baseConfig['default']['transport'] = $brokerUrl;
-        $baseConfig['default']['client'] = null;
-
-        $container->prependExtensionConfig('enqueue', $baseConfig);
+        $container->prependExtensionConfig('enqueue', [
+            'default' => [
+                'transport' => $brokerUrl,
+                'client' => null,
+            ],
+        ]);
     }
 }
