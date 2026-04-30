@@ -27,6 +27,7 @@ final class RosselKafkaExtension extends Extension implements PrependExtensionIn
          * @var array{
          *   broker: array{
          *     url: string,
+         *     debug: string|null,
          *     topics: array<string, string|null>,
          *     authentication: array{
          *       sasl_username: string|null,
@@ -55,6 +56,7 @@ final class RosselKafkaExtension extends Extension implements PrependExtensionIn
 
         $container->setParameter($bundleName.'.'.$brokerKey.'.'.BrokerConfigKeys::URL->value, $brokerConfig[BrokerConfigKeys::URL->value]);
         $container->setParameter($bundleName.'.'.$brokerKey.'.'.BrokerConfigKeys::TOPICS->value, $brokerConfig[BrokerConfigKeys::TOPICS->value]);
+        $container->setParameter($bundleName.'.'.$brokerKey.'.'.BrokerConfigKeys::DEBUG->value, $nullable($brokerConfig[BrokerConfigKeys::DEBUG->value]));
         $container->setParameter($bundleName.'.'.$brokerKey.'.'.$authKey.'.'.BrokerConfigKeys::SASL_USERNAME->value, $nullable($authConfig[BrokerConfigKeys::SASL_USERNAME->value]));
         $container->setParameter($bundleName.'.'.$brokerKey.'.'.$authKey.'.'.BrokerConfigKeys::SASL_PASSWORD->value, $nullable($authConfig[BrokerConfigKeys::SASL_PASSWORD->value]));
         $container->setParameter($bundleName.'.'.$brokerKey.'.'.$authKey.'.'.BrokerConfigKeys::SASL_MECHANISM->value, $nullable($authConfig[BrokerConfigKeys::SASL_MECHANISM->value]) ?? 'PLAIN');

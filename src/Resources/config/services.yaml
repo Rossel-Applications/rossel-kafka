@@ -30,6 +30,7 @@ services:
       $sslClientCertificate: '%rossel_kafka.broker.authentication.ssl_client_certificate%'
       $sslClientKey: '%rossel_kafka.broker.authentication.ssl_client_key%'
       $sslClientKeyPassword: '%rossel_kafka.broker.authentication.ssl_client_key_password%'
+      $debugLevel: '%rossel_kafka.broker.debug%'
 
   Rossel\RosselKafka\Service\KafkaTopicsFetcher:
     arguments:

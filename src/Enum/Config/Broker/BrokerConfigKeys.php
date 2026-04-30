@@ -17,4 +17,5 @@ enum BrokerConfigKeys: string
     case SSL_CLIENT_CERTIFICATE = 'ssl_client_certificate';
     case SSL_CLIENT_KEY = 'ssl_client_key';
     case SSL_CLIENT_KEY_PASSWORD = 'ssl_client_key_password';
+    case DEBUG = 'debug';
 }

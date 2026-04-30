@@ -37,6 +37,7 @@ final class KafkaConnector implements KafkaConnectorInterface
         ?string $sslClientKey,
         private ?string $sslClientKeyPassword,
         SslCertificateProvider $sslCertificateProvider,
+        private ?string $debugLevel = null,
     ) {
         $resolvedCaCertPath = $sslCertificateProvider->resolve($sslCaCertificateUrl, $sslCaCertificatePath);
         $resolvedClientCertPath = $sslCertificateProvider->resolvePem($sslClientCertificate, 'client_cert');
@@ -129,6 +130,10 @@ final class KafkaConnector implements KafkaConnectorInterface
             $globalConfig['sasl.mechanism'] = $this->saslMechanism;
             $globalConfig['sasl.username'] = $this->saslUsername;
             $globalConfig['sasl.password'] = $this->saslPassword;
+        }
+
+        if (null !== $this->debugLevel) {
+            $globalConfig['debug'] = $this->debugLevel;
         }
 
         return new RdKafkaConnectionFactory([
