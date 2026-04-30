@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Rossel\RosselKafka\Enum\Config\Broker\TopicConfigKeys;
 use Rossel\RosselKafka\Enum\MessageHeaders\MessageType;
+use Rossel\RosselKafka\Enum\Topic\TopicDirection;
 use Rossel\RosselKafka\Exception\UnconfiguredTopicException;
 use Rossel\RosselKafka\Model\Topic;
 use Rossel\RosselKafka\Service\KafkaTopicsFetcher;
@@ -171,6 +172,52 @@ final class KafkaTopicsFetcherTest extends TestCase
         $topics = $fetcher->getByMessageType(MessageType::EXEC_SUCCESS);
 
         self::assertCount(2, $topics);
+    }
+
+    // -------------------------------------------------------------------------
+    // Topic direction metadata
+    // -------------------------------------------------------------------------
+
+    #[Test]
+    public function outputTopicIsConsumableAndNotProducible(): void
+    {
+        $fetcher = new KafkaTopicsFetcher([
+            TopicConfigKeys::KAFKA_TOPIC_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->value => 'log.output',
+        ]);
+
+        $topic = $fetcher->get(TopicConfigKeys::KAFKA_TOPIC_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE);
+
+        self::assertSame(TopicDirection::CONSUME, $topic->getDirection());
+        self::assertTrue($topic->isConsumable());
+        self::assertFalse($topic->isProducible());
+    }
+
+    #[Test]
+    public function inputTopicIsProducibleAndNotConsumable(): void
+    {
+        $fetcher = new KafkaTopicsFetcher([
+            TopicConfigKeys::KAFKA_TOPIC_PUBLIC_SUBSCRIPTION_INPUT_V1_JSON_DELETE->value => 'subscription.input',
+        ]);
+
+        $topic = $fetcher->get(TopicConfigKeys::KAFKA_TOPIC_PUBLIC_SUBSCRIPTION_INPUT_V1_JSON_DELETE);
+
+        self::assertSame(TopicDirection::PRODUCE, $topic->getDirection());
+        self::assertFalse($topic->isConsumable());
+        self::assertTrue($topic->isProducible());
+    }
+
+    #[Test]
+    public function inoutTopicSupportsConsumptionAndProduction(): void
+    {
+        $fetcher = new KafkaTopicsFetcher([
+            TopicConfigKeys::KAFKA_TOPIC_PUBLIC_DEAD_LETTER_INOUT_V1_JSON_DELETE_D30->value => 'dead.letter',
+        ]);
+
+        $topic = $fetcher->get(TopicConfigKeys::KAFKA_TOPIC_PUBLIC_DEAD_LETTER_INOUT_V1_JSON_DELETE_D30);
+
+        self::assertSame(TopicDirection::BOTH, $topic->getDirection());
+        self::assertTrue($topic->isConsumable());
+        self::assertTrue($topic->isProducible());
     }
 
     // -------------------------------------------------------------------------

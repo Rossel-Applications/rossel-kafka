@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Rossel\RosselKafka\Enum\Config\Broker\TopicConfigKeys;
 use Rossel\RosselKafka\Enum\MessageHeaders\MessageType;
+use Rossel\RosselKafka\Enum\Topic\TopicDirection;
 use Rossel\RosselKafka\Model\Topic;
 
 final class TopicTest extends TestCase
@@ -40,6 +41,102 @@ final class TopicTest extends TestCase
         );
 
         self::assertSame([], $topic->getMessageTypes());
+    }
+
+    // -------------------------------------------------------------------------
+    // direction
+    // -------------------------------------------------------------------------
+
+    #[Test]
+    public function outputTopicHasConsumeDirection(): void
+    {
+        $topic = new Topic(
+            configKey: TopicConfigKeys::KAFKA_TOPIC_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE,
+            name: 'log.output',
+        );
+
+        self::assertSame(TopicDirection::CONSUME, $topic->getDirection());
+        self::assertTrue($topic->isConsumable());
+        self::assertFalse($topic->isProducible());
+    }
+
+    #[Test]
+    public function inputTopicHasProduceDirection(): void
+    {
+        $topic = new Topic(
+            configKey: TopicConfigKeys::KAFKA_TOPIC_PUBLIC_SUBSCRIPTION_INPUT_V1_JSON_DELETE,
+            name: 'subscription.input',
+        );
+
+        self::assertSame(TopicDirection::PRODUCE, $topic->getDirection());
+        self::assertFalse($topic->isConsumable());
+        self::assertTrue($topic->isProducible());
+    }
+
+    #[Test]
+    public function inoutTopicHasBothDirection(): void
+    {
+        $topic = new Topic(
+            configKey: TopicConfigKeys::KAFKA_TOPIC_PUBLIC_DEAD_LETTER_INOUT_V1_JSON_DELETE_D30,
+            name: 'dead-letter',
+        );
+
+        self::assertSame(TopicDirection::BOTH, $topic->getDirection());
+        self::assertTrue($topic->isConsumable());
+        self::assertTrue($topic->isProducible());
+    }
+
+    #[Test]
+    public function inputApiOutputTopicHasConsumeDirection(): void
+    {
+        $topic = new Topic(
+            configKey: TopicConfigKeys::KAFKA_TOPIC_INPUT_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE,
+            name: 'input-api.log.output',
+        );
+
+        self::assertSame(TopicDirection::CONSUME, $topic->getDirection());
+        self::assertTrue($topic->isConsumable());
+        self::assertFalse($topic->isProducible());
+    }
+
+    /**
+     * @return iterable<string, array{TopicConfigKeys, TopicDirection}>
+     */
+    public static function directionProvider(): iterable
+    {
+        yield 'OUTPUT topic → CONSUME' => [
+            TopicConfigKeys::KAFKA_TOPIC_PUBLIC_SUBSCRIPTION_OUTPUT_V1_JSON_DELETE,
+            TopicDirection::CONSUME,
+        ];
+        yield 'INPUT topic → PRODUCE' => [
+            TopicConfigKeys::KAFKA_TOPIC_PUBLIC_OFFER_INPUT_V1_JSON_DELETE,
+            TopicDirection::PRODUCE,
+        ];
+        yield 'INPUT topic (contact) → PRODUCE' => [
+            TopicConfigKeys::KAFKA_TOPIC_PUBLIC_CONTACT_INPUT_V1_JSON_DELETE,
+            TopicDirection::PRODUCE,
+        ];
+        yield 'INOUT topic → BOTH' => [
+            TopicConfigKeys::KAFKA_TOPIC_PUBLIC_DEAD_LETTER_INOUT_V1_JSON_DELETE_D30,
+            TopicDirection::BOTH,
+        ];
+        yield 'OUTPUT topic (account log) → CONSUME' => [
+            TopicConfigKeys::KAFKA_TOPIC_ACCOUNT_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE,
+            TopicDirection::CONSUME,
+        ];
+        yield 'INPUT_API log OUTPUT topic → CONSUME' => [
+            TopicConfigKeys::KAFKA_TOPIC_INPUT_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE,
+            TopicDirection::CONSUME,
+        ];
+    }
+
+    #[Test]
+    #[DataProvider('directionProvider')]
+    public function directionIsCorrectlyDerivedFromConfigKey(TopicConfigKeys $configKey, TopicDirection $expected): void
+    {
+        $topic = new Topic(configKey: $configKey, name: 'topic');
+
+        self::assertSame($expected, $topic->getDirection());
     }
 
     // -------------------------------------------------------------------------
