@@ -12,6 +12,7 @@ use Enqueue\RdKafka\RdKafkaTopic;
 use Interop\Queue\Exception;
 use Interop\Queue\Exception\InvalidDestinationException;
 use Interop\Queue\Exception\InvalidMessageException;
+use Rossel\RosselKafka\Exception\UnauthorizedTopicOperationException;
 use Rossel\RosselKafka\Model\MessageInterface;
 use Rossel\RosselKafka\Model\Topic;
 use Rossel\RosselKafka\Service\Ssl\SslCertificateProvider;
@@ -56,6 +57,10 @@ final class KafkaConnector implements KafkaConnectorInterface
     public function send(Topic|RdKafkaTopic $topic, MessageInterface $message): void
     {
         if ($topic instanceof Topic) {
+            if (!$topic->isProducible()) {
+                throw UnauthorizedTopicOperationException::produce($topic);
+            }
+
             $topic = $this->getRdKafkaTopic($topic);
         }
 
@@ -70,6 +75,10 @@ final class KafkaConnector implements KafkaConnectorInterface
      */
     public function createConsumer(Topic $topic): RdKafkaConsumer
     {
+        if (!$topic->isConsumable()) {
+            throw UnauthorizedTopicOperationException::consume($topic);
+        }
+
         return $this->rdKafkaContext->createConsumer($this->getRdKafkaTopic($topic));
     }
 

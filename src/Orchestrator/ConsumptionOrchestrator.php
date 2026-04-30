@@ -12,6 +12,7 @@ use Psr\Log\LoggerInterface;
 use Rossel\RosselKafka\Consumer\ConsumerInterface;
 use Rossel\RosselKafka\Enum\MessageHeaders\Area;
 use Rossel\RosselKafka\Enum\MessageHeaders\MessageType;
+use Rossel\RosselKafka\Exception\UnauthorizedTopicOperationException;
 use Rossel\RosselKafka\Factory\MessageFactoryInterface;
 use Rossel\RosselKafka\Model\Message;
 use Rossel\RosselKafka\Model\MessageHeaders;
@@ -45,14 +46,26 @@ final readonly class ConsumptionOrchestrator implements ConsumptionOrchestratorI
 
         $this->logger->info(\sprintf('Initializing Kafka consumer for topic "%s"...', $topic->getName()));
 
-        $this->logger->debug(\sprintf('Creating consumer for topic %s...', $topic->getName()));
-        $consumer = $this->kafkaConnector->createConsumer($topic);
-        $this->logger->debug(\sprintf('Consumer for topic %s successfully created.', $topic->getName()));
-
-        $this->logger->info(\sprintf('Consumer is now listening on topic "%s".', $topic->getName()));
+        $consumer = null;
 
         /* @phpstan-ignore while.alwaysTrue */
         while (true) {
+            try {
+                if (null === $consumer) {
+                    $this->logger->debug(\sprintf('Creating consumer for topic %s...', $topic->getName()));
+                    $consumer = $this->kafkaConnector->createConsumer($topic);
+                    $this->logger->debug(\sprintf('Consumer for topic %s successfully created.', $topic->getName()));
+                    $this->logger->info(\sprintf('Consumer is now listening on topic "%s".', $topic->getName()));
+                }
+            } catch (UnauthorizedTopicOperationException $e) {
+                $this->logger->error(
+                    \sprintf('Cannot listen on topic "%s": %s', $topic->getName(), $e->getMessage()),
+                    ['topic' => $topic->getName(), 'direction' => $topic->getDirection()->name],
+                );
+                sleep(5);
+                continue;
+            }
+
             $message = $consumer->receive(200);
 
             if ($message instanceof RdKafkaMessage) {
@@ -211,6 +224,13 @@ final readonly class ConsumptionOrchestrator implements ConsumptionOrchestratorI
             $success ? 'EXEC_SUCCESS' : 'EXEC_ERROR',
         );
 
-        $this->kafkaConnector->send($topic, $message);
+        try {
+            $this->kafkaConnector->send($topic, $message);
+        } catch (UnauthorizedTopicOperationException $e) {
+            $this->logger->error(
+                \sprintf('Cannot send log message to topic "%s": %s', $topic->getName(), $e->getMessage()),
+                ['topic' => $topic->getName(), 'direction' => $topic->getDirection()->name],
+            );
+        }
     }
 }

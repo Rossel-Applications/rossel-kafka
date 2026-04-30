@@ -19,17 +19,17 @@ enum TopicDirection
 
     public static function fromConfigKey(TopicConfigKeys $configKey): self
     {
-        $name = $configKey->name;
+        $value = strtolower($configKey->value);
 
-        if (str_contains($name, 'INOUT')) {
+        if (str_contains($value, 'inout')) {
             return self::BOTH;
         }
 
-        if (str_contains($name, 'OUTPUT')) {
+        if (str_contains($value, 'output')) {
             return self::CONSUME;
         }
 
-        if (str_contains($name, 'INPUT')) {
+        if (str_contains($value, 'input')) {
             return self::PRODUCE;
         }
 
