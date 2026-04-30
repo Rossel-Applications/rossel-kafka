@@ -57,7 +57,7 @@ final class RosselKafkaExtension extends Extension implements PrependExtensionIn
         $container->setParameter($bundleName.'.'.$brokerKey.'.'.BrokerConfigKeys::TOPICS->value, $brokerConfig[BrokerConfigKeys::TOPICS->value]);
         $container->setParameter($bundleName.'.'.$brokerKey.'.'.$authKey.'.'.BrokerConfigKeys::SASL_USERNAME->value, $nullable($authConfig[BrokerConfigKeys::SASL_USERNAME->value]));
         $container->setParameter($bundleName.'.'.$brokerKey.'.'.$authKey.'.'.BrokerConfigKeys::SASL_PASSWORD->value, $nullable($authConfig[BrokerConfigKeys::SASL_PASSWORD->value]));
-        $container->setParameter($bundleName.'.'.$brokerKey.'.'.$authKey.'.'.BrokerConfigKeys::SASL_MECHANISM->value, $authConfig[BrokerConfigKeys::SASL_MECHANISM->value]);
+        $container->setParameter($bundleName.'.'.$brokerKey.'.'.$authKey.'.'.BrokerConfigKeys::SASL_MECHANISM->value, $nullable($authConfig[BrokerConfigKeys::SASL_MECHANISM->value]) ?? 'PLAIN');
         $container->setParameter($bundleName.'.'.$brokerKey.'.'.$authKey.'.'.BrokerConfigKeys::SSL_CA_CERTIFICATE_URL->value, $nullable($authConfig[BrokerConfigKeys::SSL_CA_CERTIFICATE_URL->value]));
         $container->setParameter($bundleName.'.'.$brokerKey.'.'.$authKey.'.'.BrokerConfigKeys::SSL_CA_CERTIFICATE_PATH->value, $nullable($authConfig[BrokerConfigKeys::SSL_CA_CERTIFICATE_PATH->value]));
         $container->setParameter($bundleName.'.'.$brokerKey.'.'.$authKey.'.'.BrokerConfigKeys::SSL_CLIENT_CERTIFICATE->value, $nullable($authConfig[BrokerConfigKeys::SSL_CLIENT_CERTIFICATE->value]));

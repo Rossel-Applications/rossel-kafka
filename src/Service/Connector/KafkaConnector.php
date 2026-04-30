@@ -30,7 +30,7 @@ final class KafkaConnector implements KafkaConnectorInterface
         private string $appName,
         private ?string $saslUsername,
         private ?string $saslPassword,
-        private string $saslMechanism,
+        private ?string $saslMechanism,
         ?string $sslCaCertificateUrl,
         ?string $sslCaCertificatePath,
         ?string $sslClientCertificate,
