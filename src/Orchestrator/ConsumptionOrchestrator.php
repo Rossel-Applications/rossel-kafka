@@ -55,7 +55,6 @@ final readonly class ConsumptionOrchestrator implements ConsumptionOrchestratorI
                     $this->logger->debug(\sprintf('Creating consumer for topic %s...', $topic->getName()));
                     $consumer = $this->kafkaConnector->createConsumer($topic);
                     $this->logger->debug(\sprintf('Consumer for topic %s successfully created.', $topic->getName()));
-                    $this->logger->info(\sprintf('Consumer is now listening on topic "%s".', $topic->getName()));
                 }
             } catch (UnauthorizedTopicOperationException $e) {
                 $this->logger->error(
@@ -66,7 +65,8 @@ final readonly class ConsumptionOrchestrator implements ConsumptionOrchestratorI
                 return;
             }
 
-            $message = $consumer->receive(200);
+            $this->logger->info(\sprintf('Consumer is now listening on topic "%s".', $topic->getName()));
+            $message = $consumer->receive();
 
             if ($message instanceof RdKafkaMessage) {
                 $this->logger->info(

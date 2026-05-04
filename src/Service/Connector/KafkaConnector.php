@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Rossel\RosselKafka\Service\Connector;
 
-use Enqueue\RdKafka\RdKafkaConnectionFactory;
 use Enqueue\RdKafka\RdKafkaConsumer;
 use Enqueue\RdKafka\RdKafkaContext;
 use Enqueue\RdKafka\RdKafkaProducer;
@@ -19,32 +18,41 @@ use Rossel\RosselKafka\Service\Ssl\SslCertificateProvider;
 
 final class KafkaConnector implements KafkaConnectorInterface
 {
-    private readonly RdKafkaContext $rdKafkaContext;
+    private readonly RdKafkaContext $rdKafkaProducerContext;
+
+    private readonly RdKafkaContext $rdKafkaConsumerContext;
 
     private readonly RdKafkaProducer $rdKafkaProducer;
 
     /** @var array<string, RdKafkaTopic> */
-    private array $rdKafkaTopics = [];
+    private array $producerTopics = [];
+
+    /** @var array<string, RdKafkaTopic> */
+    private array $consumerTopics = [];
 
     public function __construct(
         string $brokerUrl,
-        private string $appName,
-        private ?string $saslUsername,
-        private ?string $saslPassword,
-        private ?string $saslMechanism,
+        private readonly string $appName,
+        private readonly ?string $saslUsername,
+        private readonly ?string $saslPassword,
+        private readonly ?string $saslMechanism,
         ?string $sslCaCertificateUrl,
         ?string $sslCaCertificatePath,
         ?string $sslClientCertificate,
         ?string $sslClientKey,
-        private ?string $sslClientKeyPassword,
+        private readonly ?string $sslClientKeyPassword,
         SslCertificateProvider $sslCertificateProvider,
-        private ?string $debugLevel = null,
+        private readonly ?string $debugLevel = null,
     ) {
         $resolvedCaCertPath = $sslCertificateProvider->resolve($sslCaCertificateUrl, $sslCaCertificatePath);
         $resolvedClientCertPath = $sslCertificateProvider->resolvePem($sslClientCertificate, 'client_cert');
         $resolvedClientKeyPath = $sslCertificateProvider->resolvePem($sslClientKey, 'client_key');
-        $this->rdKafkaContext = $this->buildContext($brokerUrl, $resolvedCaCertPath, $resolvedClientCertPath, $resolvedClientKeyPath);
-        $this->rdKafkaProducer = $this->rdKafkaContext->createProducer();
+
+        $cleanBrokerUrl = str_replace('kafka://', '', $brokerUrl);
+
+        $this->rdKafkaProducerContext = $this->buildProducerContext($cleanBrokerUrl, $resolvedCaCertPath, $resolvedClientCertPath, $resolvedClientKeyPath);
+        $this->rdKafkaConsumerContext = $this->buildConsumerContext($cleanBrokerUrl, $resolvedCaCertPath, $resolvedClientCertPath, $resolvedClientKeyPath);
+        $this->rdKafkaProducer = $this->rdKafkaProducerContext->createProducer();
     }
 
     /**
@@ -61,7 +69,7 @@ final class KafkaConnector implements KafkaConnectorInterface
                 throw UnauthorizedTopicOperationException::produce($topic);
             }
 
-            $topic = $this->getRdKafkaTopic($topic);
+            $topic = $this->getProducerTopic($topic);
         }
 
         $this->rdKafkaProducer->send(
@@ -79,23 +87,24 @@ final class KafkaConnector implements KafkaConnectorInterface
             throw UnauthorizedTopicOperationException::consume($topic);
         }
 
-        return $this->rdKafkaContext->createConsumer($this->getRdKafkaTopic($topic));
+        return $this->rdKafkaConsumerContext->createConsumer($this->getConsumerTopic($topic));
     }
 
-    private function getRdKafkaTopic(Topic $topic): RdKafkaTopic
+    private function getProducerTopic(Topic $topic): RdKafkaTopic
     {
-        return $this->rdKafkaTopics[$topic->getName()] ??= $this->rdKafkaContext->createTopic($topic->getName());
+        return $this->producerTopics[$topic->getName()] ??= $this->rdKafkaProducerContext->createTopic($topic->getName());
     }
 
-    private function buildContext(string $brokerUrl, ?string $resolvedCaCertPath, ?string $resolvedClientCertPath, ?string $resolvedClientKeyPath): RdKafkaContext
+    private function getConsumerTopic(Topic $topic): RdKafkaTopic
     {
-        return $this->buildConnectionFactory($brokerUrl, $resolvedCaCertPath, $resolvedClientCertPath, $resolvedClientKeyPath)->createContext();
+        return $this->consumerTopics[$topic->getName()] ??= $this->rdKafkaConsumerContext->createTopic($topic->getName());
     }
 
-    private function buildConnectionFactory(string $brokerUrl, ?string $resolvedCaCertPath, ?string $resolvedClientCertPath, ?string $resolvedClientKeyPath): RdKafkaConnectionFactory
+    /**
+     * @return array<string, string>
+     */
+    private function buildCommonGlobalConfig(string $brokerUrl, ?string $resolvedCaCertPath, ?string $resolvedClientCertPath, ?string $resolvedClientKeyPath): array
     {
-        $brokerUrl = str_replace('kafka://', '', $brokerUrl);
-
         $hasSsl = null !== $resolvedCaCertPath || null !== $resolvedClientCertPath;
         $hasSasl = null !== $this->saslUsername && null !== $this->saslPassword;
 
@@ -106,52 +115,86 @@ final class KafkaConnector implements KafkaConnectorInterface
             default => 'plaintext',
         };
 
-        $globalConfig = [
-            'group.id' => $this->appName,
+        $config = [
             'metadata.broker.list' => $brokerUrl,
-            'enable.auto.commit' => 'true',
-            'auto.commit.interval.ms' => '5000',
-            'enable.idempotence' => 'true',
-            'retries' => '2147483647',
-            'linger.ms' => '100',
-            'batch.size' => '16384',
-            'fetch.min.bytes' => '1000',
             'security.protocol' => $securityProtocol,
         ];
 
         if (null !== $resolvedCaCertPath) {
-            $globalConfig['ssl.ca.location'] = $resolvedCaCertPath;
+            $config['ssl.ca.location'] = $resolvedCaCertPath;
         }
 
         if (null !== $resolvedClientCertPath) {
-            $globalConfig['ssl.certificate.location'] = $resolvedClientCertPath;
+            $config['ssl.certificate.location'] = $resolvedClientCertPath;
         }
 
         if (null !== $resolvedClientKeyPath) {
-            $globalConfig['ssl.key.location'] = $resolvedClientKeyPath;
+            $config['ssl.key.location'] = $resolvedClientKeyPath;
         }
 
         if (null !== $this->sslClientKeyPassword) {
-            $globalConfig['ssl.key.password'] = $this->sslClientKeyPassword;
+            $config['ssl.key.password'] = $this->sslClientKeyPassword;
         }
 
         if ($hasSasl) {
-            $globalConfig['sasl.mechanism'] = $this->saslMechanism;
-            $globalConfig['sasl.username'] = $this->saslUsername;
-            $globalConfig['sasl.password'] = $this->saslPassword;
+            if (null !== $this->saslMechanism) {
+                $config['sasl.mechanism'] = $this->saslMechanism;
+            }
+            /** @var string $saslUsername */
+            $saslUsername = $this->saslUsername;
+            /** @var string $saslPassword */
+            $saslPassword = $this->saslPassword;
+            $config['sasl.username'] = $saslUsername;
+            $config['sasl.password'] = $saslPassword;
         }
 
         if (null !== $this->debugLevel) {
-            $globalConfig['debug'] = $this->debugLevel;
+            $config['debug'] = $this->debugLevel;
         }
 
-        return new RdKafkaConnectionFactory([
+        return $config;
+    }
+
+    private function buildProducerContext(string $brokerUrl, ?string $resolvedCaCertPath, ?string $resolvedClientCertPath, ?string $resolvedClientKeyPath): RdKafkaContext
+    {
+        /** @var array<string, string> $globalConfig */
+        $globalConfig = array_merge(
+            $this->buildCommonGlobalConfig($brokerUrl, $resolvedCaCertPath, $resolvedClientCertPath, $resolvedClientKeyPath),
+            [
+                'enable.idempotence' => 'true',
+                'retries' => '2147483647',
+                'linger.ms' => '100',
+                'batch.size' => '16384',
+            ]
+        );
+
+        return new RdKafkaContext([
             'global' => $globalConfig,
             'topic' => [
-                'auto.offset.reset' => 'latest',
                 'request.required.acks' => 'all',
                 'delivery.timeout.ms' => '518400000', // 6 days
                 'compression.type' => 'gzip',
+            ],
+        ]);
+    }
+
+    private function buildConsumerContext(string $brokerUrl, ?string $resolvedCaCertPath, ?string $resolvedClientCertPath, ?string $resolvedClientKeyPath): RdKafkaContext
+    {
+        /** @var array<string, string> $globalConfig */
+        $globalConfig = array_merge(
+            $this->buildCommonGlobalConfig($brokerUrl, $resolvedCaCertPath, $resolvedClientCertPath, $resolvedClientKeyPath),
+            [
+                'group.id' => $this->appName,
+                'enable.auto.commit' => 'true',
+                'auto.commit.interval.ms' => '5000',
+                'fetch.min.bytes' => '1000',
+            ]
+        );
+
+        return new RdKafkaContext([
+            'global' => $globalConfig,
+            'topic' => [
+                'auto.offset.reset' => 'latest',
             ],
         ]);
     }

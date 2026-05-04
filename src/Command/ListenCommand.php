@@ -62,7 +62,7 @@ final class ListenCommand extends Command
         $topics = $this->extractConsumableTopicsFromString($topicsInput);
 
         if (0 === ($topicsCount = \count($topics))) {
-            $message = 'No topics found.';
+            $message = 'This topic is not configured for consumption.';
             $outputStrategy->warning($message);
             $this->logger->warning($message);
 
