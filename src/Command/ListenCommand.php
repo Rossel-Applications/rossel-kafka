@@ -59,7 +59,7 @@ final class ListenCommand extends Command
         /** @var string $topicsInput */
         $topicsInput = $input->getOption('topics');
 
-        $topics = $this->extractTopicsFromString($topicsInput);
+        $topics = $this->extractConsumableTopicsFromString($topicsInput);
 
         if (0 === ($topicsCount = \count($topics))) {
             $message = 'No topics found.';
@@ -165,7 +165,7 @@ final class ListenCommand extends Command
     /**
      * @return list<Topic>
      */
-    private function extractTopicsFromString(?string $topics): array
+    private function extractConsumableTopicsFromString(?string $topics): array
     {
         if (null === $topics || '' === str_replace([',', ' '], '', $topics)) {
             return array_values($this->kafkaTopicsFetcher->getAll());
@@ -174,7 +174,11 @@ final class ListenCommand extends Command
         $results = [];
 
         foreach (explode(',', $topics) as $topicString) {
-            $results[] = $this->kafkaTopicsFetcher->get(TopicConfigKeys::from(trim($topicString)));
+            $resolvedTopic = $this->kafkaTopicsFetcher->get(TopicConfigKeys::from(trim($topicString)));
+
+            if ($resolvedTopic->isConsumable()) {
+                $results[] = $resolvedTopic;
+            }
         }
 
         return $results;

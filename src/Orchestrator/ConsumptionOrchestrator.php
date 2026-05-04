@@ -62,8 +62,8 @@ final readonly class ConsumptionOrchestrator implements ConsumptionOrchestratorI
                     \sprintf('Cannot listen on topic "%s": %s', $topic->getName(), $e->getMessage()),
                     ['topic' => $topic->getName(), 'direction' => $topic->getDirection()->name],
                 );
-                sleep(5);
-                continue;
+
+                return;
             }
 
             $message = $consumer->receive(200);
