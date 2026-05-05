@@ -14,6 +14,7 @@ use Interop\Queue\Exception\InvalidMessageException;
 use Rossel\RosselKafka\Exception\UnauthorizedTopicOperationException;
 use Rossel\RosselKafka\Model\MessageInterface;
 use Rossel\RosselKafka\Model\Topic;
+use Rossel\RosselKafka\Service\Serializer\RawKafkaSerializer;
 use Rossel\RosselKafka\Service\Ssl\SslCertificateProvider;
 
 final class KafkaConnector implements KafkaConnectorInterface
@@ -168,7 +169,7 @@ final class KafkaConnector implements KafkaConnectorInterface
             ]
         );
 
-        return new RdKafkaContext([
+        $context = new RdKafkaContext([
             'global' => $globalConfig,
             'topic' => [
                 'request.required.acks' => 'all',
@@ -176,6 +177,12 @@ final class KafkaConnector implements KafkaConnectorInterface
                 'compression.type' => 'gzip',
             ],
         ]);
+
+        // Align with the Rossel Kafka cluster contract: value carries the raw
+        // business payload, metadata travels in real Kafka headers.
+        $context->setSerializer(new RawKafkaSerializer());
+
+        return $context;
     }
 
     private function buildConsumerContext(string $brokerUrl, ?string $resolvedCaCertPath, ?string $resolvedClientCertPath, ?string $resolvedClientKeyPath): RdKafkaContext
@@ -191,11 +198,17 @@ final class KafkaConnector implements KafkaConnectorInterface
             ]
         );
 
-        return new RdKafkaContext([
+        $context = new RdKafkaContext([
             'global' => $globalConfig,
             'topic' => [
                 'auto.offset.reset' => 'latest',
             ],
         ]);
+
+        // Align with the Rossel Kafka cluster contract: value carries the raw
+        // business payload, metadata travels in real Kafka headers.
+        $context->setSerializer(new RawKafkaSerializer());
+
+        return $context;
     }
 }
