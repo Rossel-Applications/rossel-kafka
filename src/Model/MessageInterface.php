@@ -17,4 +17,11 @@ interface MessageInterface extends RdKafkaMessageWrapperInterface
      * @return MessageType the type of the message
      */
     public function getType(): MessageType;
+
+    /**
+     * Returns the Kafka record key.
+     *
+     * @return string|null the record key, or null if the record has no key
+     */
+    public function getKey(): ?string;
 }

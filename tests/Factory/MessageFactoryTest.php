@@ -54,6 +54,26 @@ final class MessageFactoryTest extends TestCase
         self::assertSame('BE', $message->getRdKafkaMessage()->getHeaders()[MessageHeaders::KEY_AREA]);
     }
 
+    #[Test]
+    public function keyIsCopiedFromRdKafkaMessage(): void
+    {
+        $rdMessage = $this->buildRdKafkaMessage('{}');
+        $rdMessage->setKey('subscription-42');
+
+        $message = $this->factory->createMessageFromRdKafka($rdMessage);
+
+        self::assertSame('subscription-42', $message->getKey());
+        self::assertSame('subscription-42', $message->getRdKafkaMessage()->getKey());
+    }
+
+    #[Test]
+    public function keyIsNullWhenRdKafkaMessageHasNoKey(): void
+    {
+        $message = $this->factory->createMessageFromRdKafka($this->buildRdKafkaMessage('{}'));
+
+        self::assertNull($message->getKey());
+    }
+
     // -------------------------------------------------------------------------
     // Body deserialization
     // -------------------------------------------------------------------------

@@ -8,6 +8,8 @@ A ready-to-use PHP library for seamless communication with Rossel's Kafka infras
 composer require rossel/rossel-kafka
 ```
 
+Upgrading from 0.4? Read [UPGRADE-0.5.md](UPGRADE-0.5.md).
+
 ## Configuration
 
 ```yaml
@@ -120,6 +122,9 @@ $message = new Message(
         messageType: MessageType::CANCEL_B2C_SUBSCRIPTION,
     ),
     body: ['foo' => 'bar'],
+    // Optional Kafka record key. Records with the same key go to the same partition,
+    // so their order is kept. Without a key, records are spread across partitions.
+    key: 'subscription-42',
 );
 
 $kafkaConnector->send($topic, $message);
@@ -150,6 +155,7 @@ final class MyConsumer implements ConsumerInterface
     public function __invoke(Message $message): void
     {
         // handle message
+        // $message->getKey() returns the Kafka record key, or null if the record has none
     }
 }
 ```

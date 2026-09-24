@@ -21,12 +21,14 @@ readonly class Message implements MessageInterface
      *
      * @param MessageHeadersInterface        $headers the message headers
      * @param array<array-key, mixed>|string $body    the message body
+     * @param string|null                    $key     the Kafka record key, used for partitioning and compaction
      *
      * @throws \JsonException
      */
     public function __construct(
         private MessageHeadersInterface $headers,
         array|string $body,
+        private ?string $key = null,
     ) {
         if (\is_array($body)) {
             $body = json_encode($body, \JSON_THROW_ON_ERROR);
@@ -38,6 +40,7 @@ readonly class Message implements MessageInterface
             body: $this->body,
             headers: $this->headers->toArray(),
         );
+        $this->rdKafkaMessage->setKey($this->key);
     }
 
     /**
@@ -51,6 +54,14 @@ readonly class Message implements MessageInterface
     public function getRdKafkaMessage(): RdKafkaMessage
     {
         return $this->rdKafkaMessage;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getKey(): ?string
+    {
+        return $this->key;
     }
 
     public function getBody(): string

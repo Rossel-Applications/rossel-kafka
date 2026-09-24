@@ -120,6 +120,28 @@ final class MessageTest extends TestCase
     }
 
     // -------------------------------------------------------------------------
+    // Key
+    // -------------------------------------------------------------------------
+
+    #[Test]
+    public function keyIsNullByDefault(): void
+    {
+        $message = new Message($this->buildHeaders(), 'body');
+
+        self::assertNull($message->getKey());
+        self::assertNull($message->getRdKafkaMessage()->getKey());
+    }
+
+    #[Test]
+    public function keyIsExposedAndSetOnRdKafkaMessage(): void
+    {
+        $message = new Message($this->buildHeaders(), 'body', 'subscription-42');
+
+        self::assertSame('subscription-42', $message->getKey());
+        self::assertSame('subscription-42', $message->getRdKafkaMessage()->getKey());
+    }
+
+    // -------------------------------------------------------------------------
     // Helper
     // -------------------------------------------------------------------------
 
