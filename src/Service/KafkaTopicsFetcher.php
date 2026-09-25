@@ -97,6 +97,22 @@ final class KafkaTopicsFetcher implements KafkaTopicsFetcherInterface
             MessageType::EXEC_SUCCESS,
             MessageType::EXEC_ERROR,
         ],
+        TopicConfigKeys::KAFKA_TOPIC_PUBLIC_B2B_CUSTOMER_OUTPUT_V1_JSON_DELETE->name => [
+            MessageType::B2B_CREATE_OR_UPDATE_CUSTOMER,
+            MessageType::B2B_DELETE_CUSTOMER,
+            MessageType::B2B_CREATE_OR_UPDATE_CONTACT,
+            MessageType::B2B_DELETE_CONTACT,
+            MessageType::B2B_CREATE_OR_UPDATE_OPPORTUNITY,
+            MessageType::B2B_CREATE_OR_UPDATE_ORDER,
+            MessageType::B2B_CREATE_OR_UPDATE_CONTRACT,
+            MessageType::B2B_CREATE_OR_UPDATE_INVOICE,
+        ],
+        TopicConfigKeys::KAFKA_TOPIC_PUBLIC_B2B_SALES_REP_OUTPUT_V1_JSON_DELETE->name => [
+            MessageType::B2B_CREATE_OR_UPDATE_SALES_REP,
+        ],
+        TopicConfigKeys::KAFKA_TOPIC_PUBLIC_B2B_REFERENCE_ITEM_OUTPUT_V1_JSON_DELETE->name => [
+            MessageType::B2B_CREATE_OR_UPDATE_REFERENCE_ITEM,
+        ],
     ];
 
     /**

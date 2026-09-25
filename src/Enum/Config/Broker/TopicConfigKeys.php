@@ -26,4 +26,7 @@ enum TopicConfigKeys: string
     case KAFKA_TOPIC_INPUT_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE = 'input_api_public_log_output_v1_json_delete';
     case KAFKA_TOPIC_OUTPUT_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE = 'output_api_public_log_output_v1_json_delete';
     case KAFKA_TOPIC_PUBLIC_PROFILE_OUTPUT_V1_JSON_DELETE = 'public_profile_output_v1_json_delete';
+    case KAFKA_TOPIC_PUBLIC_B2B_CUSTOMER_OUTPUT_V1_JSON_DELETE = 'public_b2b_customer_output_v1_json_delete';
+    case KAFKA_TOPIC_PUBLIC_B2B_SALES_REP_OUTPUT_V1_JSON_DELETE = 'public_b2b_sales_rep_output_v1_json_delete';
+    case KAFKA_TOPIC_PUBLIC_B2B_REFERENCE_ITEM_OUTPUT_V1_JSON_DELETE = 'public_b2b_reference_item_output_v1_json_delete';
 }

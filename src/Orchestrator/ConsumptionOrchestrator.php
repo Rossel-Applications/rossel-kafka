@@ -48,7 +48,6 @@ final readonly class ConsumptionOrchestrator implements ConsumptionOrchestratorI
 
         $consumer = null;
 
-        /* @phpstan-ignore while.alwaysTrue */
         while (true) {
             try {
                 if (null === $consumer) {

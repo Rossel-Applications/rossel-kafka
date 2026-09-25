@@ -249,6 +249,46 @@ final class KafkaTopicsFetcherTest extends TestCase
             TopicConfigKeys::KAFKA_TOPIC_PUBLIC_OFFER_OUTPUT_V1_JSON_DELETE,
             MessageType::SYNC_B2C_ERP_OFFERS,
         ];
+        yield 'b2b customer output supports B2B_CREATE_OR_UPDATE_CUSTOMER' => [
+            TopicConfigKeys::KAFKA_TOPIC_PUBLIC_B2B_CUSTOMER_OUTPUT_V1_JSON_DELETE,
+            MessageType::B2B_CREATE_OR_UPDATE_CUSTOMER,
+        ];
+        yield 'b2b customer output supports B2B_DELETE_CUSTOMER' => [
+            TopicConfigKeys::KAFKA_TOPIC_PUBLIC_B2B_CUSTOMER_OUTPUT_V1_JSON_DELETE,
+            MessageType::B2B_DELETE_CUSTOMER,
+        ];
+        yield 'b2b customer output supports B2B_CREATE_OR_UPDATE_CONTACT' => [
+            TopicConfigKeys::KAFKA_TOPIC_PUBLIC_B2B_CUSTOMER_OUTPUT_V1_JSON_DELETE,
+            MessageType::B2B_CREATE_OR_UPDATE_CONTACT,
+        ];
+        yield 'b2b customer output supports B2B_DELETE_CONTACT' => [
+            TopicConfigKeys::KAFKA_TOPIC_PUBLIC_B2B_CUSTOMER_OUTPUT_V1_JSON_DELETE,
+            MessageType::B2B_DELETE_CONTACT,
+        ];
+        yield 'b2b customer output supports B2B_CREATE_OR_UPDATE_OPPORTUNITY' => [
+            TopicConfigKeys::KAFKA_TOPIC_PUBLIC_B2B_CUSTOMER_OUTPUT_V1_JSON_DELETE,
+            MessageType::B2B_CREATE_OR_UPDATE_OPPORTUNITY,
+        ];
+        yield 'b2b customer output supports B2B_CREATE_OR_UPDATE_ORDER' => [
+            TopicConfigKeys::KAFKA_TOPIC_PUBLIC_B2B_CUSTOMER_OUTPUT_V1_JSON_DELETE,
+            MessageType::B2B_CREATE_OR_UPDATE_ORDER,
+        ];
+        yield 'b2b customer output supports B2B_CREATE_OR_UPDATE_CONTRACT' => [
+            TopicConfigKeys::KAFKA_TOPIC_PUBLIC_B2B_CUSTOMER_OUTPUT_V1_JSON_DELETE,
+            MessageType::B2B_CREATE_OR_UPDATE_CONTRACT,
+        ];
+        yield 'b2b customer output supports B2B_CREATE_OR_UPDATE_INVOICE' => [
+            TopicConfigKeys::KAFKA_TOPIC_PUBLIC_B2B_CUSTOMER_OUTPUT_V1_JSON_DELETE,
+            MessageType::B2B_CREATE_OR_UPDATE_INVOICE,
+        ];
+        yield 'b2b sales rep output supports B2B_CREATE_OR_UPDATE_SALES_REP' => [
+            TopicConfigKeys::KAFKA_TOPIC_PUBLIC_B2B_SALES_REP_OUTPUT_V1_JSON_DELETE,
+            MessageType::B2B_CREATE_OR_UPDATE_SALES_REP,
+        ];
+        yield 'b2b reference item output supports B2B_CREATE_OR_UPDATE_REFERENCE_ITEM' => [
+            TopicConfigKeys::KAFKA_TOPIC_PUBLIC_B2B_REFERENCE_ITEM_OUTPUT_V1_JSON_DELETE,
+            MessageType::B2B_CREATE_OR_UPDATE_REFERENCE_ITEM,
+        ];
     }
 
     #[Test]
@@ -262,5 +302,32 @@ final class KafkaTopicsFetcherTest extends TestCase
         $topic = $fetcher->get($configKey);
 
         self::assertTrue($topic->supportsMessageType($expectedType));
+    }
+
+    #[Test]
+    public function b2bCustomerTopicDoesNotSupportSalesRepMessageType(): void
+    {
+        $fetcher = new KafkaTopicsFetcher([
+            TopicConfigKeys::KAFKA_TOPIC_PUBLIC_B2B_CUSTOMER_OUTPUT_V1_JSON_DELETE->value => 'b2b.customer',
+        ]);
+
+        $topic = $fetcher->get(TopicConfigKeys::KAFKA_TOPIC_PUBLIC_B2B_CUSTOMER_OUTPUT_V1_JSON_DELETE);
+
+        self::assertFalse($topic->supportsMessageType(MessageType::B2B_CREATE_OR_UPDATE_SALES_REP));
+    }
+
+    #[Test]
+    public function getByMessageTypeRoutesB2bDeleteCustomerToCustomerTopicOnly(): void
+    {
+        $fetcher = new KafkaTopicsFetcher([
+            TopicConfigKeys::KAFKA_TOPIC_PUBLIC_B2B_CUSTOMER_OUTPUT_V1_JSON_DELETE->value => 'b2b.customer',
+            TopicConfigKeys::KAFKA_TOPIC_PUBLIC_B2B_SALES_REP_OUTPUT_V1_JSON_DELETE->value => 'b2b.sales_rep',
+            TopicConfigKeys::KAFKA_TOPIC_PUBLIC_B2B_REFERENCE_ITEM_OUTPUT_V1_JSON_DELETE->value => 'b2b.reference_item',
+        ]);
+
+        $topics = $fetcher->getByMessageType(MessageType::B2B_DELETE_CUSTOMER);
+
+        self::assertCount(1, $topics);
+        self::assertSame('b2b.customer', $topics[0]->getName());
     }
 }
