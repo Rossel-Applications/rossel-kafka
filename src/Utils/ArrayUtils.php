@@ -9,7 +9,7 @@ final readonly class ArrayUtils
     /**
      * @param array<array-key, mixed> $array
      */
-    public static function pull(array $array, string $key): mixed
+    public static function pull(array &$array, string $key): mixed
     {
         if (!\array_key_exists($key, $array)) {
             throw new \InvalidArgumentException(\sprintf('The key "%s" does not exist.', $key));
@@ -17,7 +17,7 @@ final readonly class ArrayUtils
 
         $value = $array[$key];
 
-        array_unshift($array, $value);
+        unset($array[$key]);
 
         return $value;
     }

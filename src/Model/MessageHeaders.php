@@ -61,6 +61,7 @@ final readonly class MessageHeaders implements MessageHeadersInterface
     public function toArray(): array
     {
         return [
+            ...$this->additionalHeaders,
             self::KEY_AREA => $this->getArea()->value,
             self::KEY_DATE_TIME => $this->getDateTime()->format(\DateTimeInterface::ATOM),
             self::KEY_DATE_TIME_ORIGINAL => $this->getDateTimeOriginal()->format(\DateTimeInterface::ATOM),

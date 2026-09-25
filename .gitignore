@@ -56,6 +56,7 @@
 !bin/console
 !bin/symfony_requirements
 /vendor/
+/tools/**/vendor
 
 # Assets and user uploads
 /web/bundles/

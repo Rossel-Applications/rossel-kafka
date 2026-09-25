@@ -1,0 +1,190 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Rossel\RosselKafka\Service;
+
+use Rossel\RosselKafka\Enum\Config\Broker\TopicConfigKeys;
+use Rossel\RosselKafka\Enum\MessageHeaders\MessageType;
+use Rossel\RosselKafka\Exception\UnconfiguredTopicException;
+use Rossel\RosselKafka\Model\Topic;
+
+final class KafkaTopicsFetcher implements KafkaTopicsFetcherInterface
+{
+    private const KAFKA_TOPIC_MESSAGES_MAPPINGS = [
+        TopicConfigKeys::KAFKA_TOPIC_ACCOUNT_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->name => [
+            MessageType::EXEC_SUCCESS,
+            MessageType::EXEC_ERROR,
+        ],
+        TopicConfigKeys::KAFKA_TOPIC_AUTHENTICATION_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->name => [
+            MessageType::EXEC_SUCCESS,
+            MessageType::EXEC_ERROR,
+        ],
+        /*
+         * todo: add messages from old topic DEAD_LETTER (not documented in Event Catalog, but mentionned [here](https://rossel-applications.atlassian.net/wiki/spaces/MIT/pages/1196851201/Migration+cluster+Kafka))
+         */
+        TopicConfigKeys::KAFKA_TOPIC_PUBLIC_DEAD_LETTER_INOUT_V1_JSON_DELETE_D30->name => [
+        ],
+        TopicConfigKeys::KAFKA_TOPIC_ERP_SUBSCRIPTION_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->name => [
+            MessageType::EXEC_SUCCESS,
+            MessageType::EXEC_ERROR,
+        ],
+        TopicConfigKeys::KAFKA_TOPIC_PUBLIC_INHERITANCE_OUTPUT_V1_JSON_DELETE->name => [
+            MessageType::SYNC_B2C_INHERITANCE,
+        ],
+        TopicConfigKeys::KAFKA_TOPIC_INHERITANCE_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->name => [
+            MessageType::EXEC_SUCCESS,
+            MessageType::EXEC_ERROR,
+        ],
+        TopicConfigKeys::KAFKA_TOPIC_NOTIFICATION_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->name => [
+            MessageType::EXEC_SUCCESS,
+            MessageType::EXEC_ERROR,
+        ],
+        TopicConfigKeys::KAFKA_TOPIC_PUBLIC_NOTIFICATION_INPUT_V1_JSON_DELETE->name => [
+            MessageType::SEND_B2C_EMAIL_NOTIFICATION,
+        ],
+        TopicConfigKeys::KAFKA_TOPIC_OFFER_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->name => [
+            MessageType::EXEC_SUCCESS,
+            MessageType::EXEC_ERROR,
+        ],
+        TopicConfigKeys::KAFKA_TOPIC_PUBLIC_OFFER_OUTPUT_V1_JSON_DELETE->name => [
+            MessageType::SYNC_B2C_ERP_OFFERS,
+        ],
+        TopicConfigKeys::KAFKA_TOPIC_PROFILE_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->name => [
+            MessageType::EXEC_SUCCESS,
+            MessageType::EXEC_ERROR,
+        ],
+        TopicConfigKeys::KAFKA_TOPIC_PURCHASE_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->name => [
+            MessageType::EXEC_SUCCESS,
+            MessageType::EXEC_ERROR,
+        ],
+        TopicConfigKeys::KAFKA_TOPIC_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->name => [
+            MessageType::EXEC_SUCCESS,
+            MessageType::EXEC_ERROR,
+        ],
+        TopicConfigKeys::KAFKA_TOPIC_PUBLIC_OFFER_INPUT_V1_JSON_DELETE->name => [
+            MessageType::REQUEST_SYNC_B2C_ERP_OFFERS,
+        ],
+        TopicConfigKeys::KAFKA_TOPIC_PUBLIC_SUBSCRIPTION_INPUT_V1_JSON_DELETE->name => [
+            MessageType::CANCEL_B2C_SUBSCRIPTION,
+            MessageType::CHANGE_OFFER,
+            MessageType::CREATE_OR_UPDATE_MOVING_ADDRESS,
+            MessageType::CREATE_OR_UPDATE_SEPA,
+            MessageType::CREATE_OR_UPDATE_SUSPENSION,
+            MessageType::CREATE_OR_UPDATE_TEMPORARY_DELIVERY_ADDRESS,
+            MessageType::CREATE_OR_UPDATE_WALLET,
+            MessageType::DELETE_MOVING_ADDRESS,
+            MessageType::DELETE_SUSPENSION,
+            MessageType::DELETE_TEMPORARY_DELIVERY_ADDRESS,
+            MessageType::REQUEST_SYNC_B2C_ERP_SUBSCRIPTION,
+            MessageType::UPDATE_INVOICE_ADDRESS,
+        ],
+        TopicConfigKeys::KAFKA_TOPIC_PUBLIC_SUBSCRIPTION_OUTPUT_V1_JSON_DELETE->name => [
+            MessageType::SYNC_B2C_ERP_SUBSCRIBED_SSO,
+            MessageType::SYNC_B2C_ERP_SUBSCRIPTION,
+            MessageType::SYNC_B2C_ERP_SUBSCRIPTION_PAYMENT_METHODS,
+        ],
+        TopicConfigKeys::KAFKA_TOPIC_PUBLIC_CONTACT_INPUT_V1_JSON_DELETE->name => [
+            MessageType::CREATE_OR_UPDATE_B2C_NON_ERP_SUBSCRIPTION,
+            MessageType::CREATE_OR_UPDATE_B2C_PREFERENCES,
+            MessageType::CREATE_OR_UPDATE_B2C_PROFILE,
+        ],
+        TopicConfigKeys::KAFKA_TOPIC_INPUT_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->name => [
+            MessageType::EXEC_SUCCESS,
+            MessageType::EXEC_ERROR,
+        ],
+        TopicConfigKeys::KAFKA_TOPIC_OUTPUT_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->name => [
+            MessageType::EXEC_SUCCESS,
+            MessageType::EXEC_ERROR,
+        ],
+        TopicConfigKeys::KAFKA_TOPIC_PUBLIC_B2B_CUSTOMER_OUTPUT_V1_JSON_DELETE->name => [
+            MessageType::B2B_CREATE_OR_UPDATE_CUSTOMER,
+            MessageType::B2B_DELETE_CUSTOMER,
+            MessageType::B2B_CREATE_OR_UPDATE_CONTACT,
+            MessageType::B2B_DELETE_CONTACT,
+            MessageType::B2B_CREATE_OR_UPDATE_OPPORTUNITY,
+            MessageType::B2B_CREATE_OR_UPDATE_ORDER,
+            MessageType::B2B_CREATE_OR_UPDATE_CONTRACT,
+            MessageType::B2B_CREATE_OR_UPDATE_INVOICE,
+        ],
+        TopicConfigKeys::KAFKA_TOPIC_PUBLIC_B2B_SALES_REP_OUTPUT_V1_JSON_DELETE->name => [
+            MessageType::B2B_CREATE_OR_UPDATE_SALES_REP,
+        ],
+        TopicConfigKeys::KAFKA_TOPIC_PUBLIC_B2B_REFERENCE_ITEM_OUTPUT_V1_JSON_DELETE->name => [
+            MessageType::B2B_CREATE_OR_UPDATE_REFERENCE_ITEM,
+        ],
+    ];
+
+    /**
+     * @var array<string, Topic>
+     */
+    private array $topics = [];
+
+    /**
+     * @param array<string, string|null> $topics
+     */
+    public function __construct(
+        array $topics,
+    ) {
+        $this->initializeTopics($topics);
+    }
+
+    public function get(TopicConfigKeys $key): Topic
+    {
+        return $this->topics[$key->name] ?? throw new UnconfiguredTopicException($key);
+    }
+
+    /**
+     * @return array<string, Topic>
+     */
+    public function getAll(): array
+    {
+        return $this->topics;
+    }
+
+    /**
+     * @return array<array-key, Topic>
+     */
+    public function getByMessageType(MessageType $messageType): array
+    {
+        $results = [];
+
+        foreach ($this->topics as $topic) {
+            if ($topic->supportsMessageType($messageType)) {
+                $results[] = $topic;
+            }
+        }
+
+        return $results;
+    }
+
+    /**
+     * @param array<string, string|null> $topics
+     */
+    private function initializeTopics(
+        array $topics,
+    ): void {
+        foreach ($topics as $topicConfigKey => $topicName) {
+            if (null === $topicName || '' === $topicName) {
+                continue;
+            }
+
+            $this->initializeTopic($topicConfigKey, $topicName);
+        }
+    }
+
+    private function initializeTopic(
+        string $topicConfigKey,
+        string $topicName,
+    ): void {
+        $validatedTopicConfigKey = TopicConfigKeys::from($topicConfigKey);
+
+        $messages = self::KAFKA_TOPIC_MESSAGES_MAPPINGS[$validatedTopicConfigKey->name] ?? [];
+
+        $this->topics[$validatedTopicConfigKey->name] = new Topic(
+            configKey: $validatedTopicConfigKey,
+            name: $topicName,
+            messageTypes: $messages,
+        );
+    }
+}
