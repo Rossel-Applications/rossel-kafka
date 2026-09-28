@@ -8,6 +8,7 @@ use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 
 enum MessageType
 {
+    case B2B_CREATE_OR_UPDATE_ACTIVITY;
     case B2B_CREATE_OR_UPDATE_CONTACT;
     case B2B_CREATE_OR_UPDATE_CONTRACT;
     case B2B_CREATE_OR_UPDATE_CUSTOMER;
