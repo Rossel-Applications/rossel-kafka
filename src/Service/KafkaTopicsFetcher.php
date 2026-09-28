@@ -106,6 +106,7 @@ final class KafkaTopicsFetcher implements KafkaTopicsFetcherInterface
             MessageType::B2B_CREATE_OR_UPDATE_ORDER,
             MessageType::B2B_CREATE_OR_UPDATE_CONTRACT,
             MessageType::B2B_CREATE_OR_UPDATE_INVOICE,
+            MessageType::B2B_CREATE_OR_UPDATE_ACTIVITY,
         ],
         TopicConfigKeys::KAFKA_TOPIC_PUBLIC_B2B_SALES_REP_OUTPUT_V1_JSON_DELETE->name => [
             MessageType::B2B_CREATE_OR_UPDATE_SALES_REP,

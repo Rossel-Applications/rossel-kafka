@@ -281,6 +281,10 @@ final class KafkaTopicsFetcherTest extends TestCase
             TopicConfigKeys::KAFKA_TOPIC_PUBLIC_B2B_CUSTOMER_OUTPUT_V1_JSON_DELETE,
             MessageType::B2B_CREATE_OR_UPDATE_INVOICE,
         ];
+        yield 'b2b customer output supports B2B_CREATE_OR_UPDATE_ACTIVITY' => [
+            TopicConfigKeys::KAFKA_TOPIC_PUBLIC_B2B_CUSTOMER_OUTPUT_V1_JSON_DELETE,
+            MessageType::B2B_CREATE_OR_UPDATE_ACTIVITY,
+        ];
         yield 'b2b sales rep output supports B2B_CREATE_OR_UPDATE_SALES_REP' => [
             TopicConfigKeys::KAFKA_TOPIC_PUBLIC_B2B_SALES_REP_OUTPUT_V1_JSON_DELETE,
             MessageType::B2B_CREATE_OR_UPDATE_SALES_REP,
