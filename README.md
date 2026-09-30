@@ -46,6 +46,34 @@ rossel_kafka:
 
 Each topic key maps to the actual Kafka topic name provided via environment variable.
 
+### Topic roles
+
+By default, the direction of a topic is derived from its name, from the point of view of an application that does not own the topic:
+
+| Topic    | Direction |
+|----------|-----------|
+| `input`  | produce   |
+| `output` | consume   |
+| `inout`  | both      |
+
+This default is wrong for the topic owner, and for any application granted other roles in the owner's manifest. In those cases, declare the roles granted to the application on the topic, as in the manifest ACLs:
+
+```yaml
+rossel_kafka:
+    broker:
+        topics:
+            # Short form: direction derived from the name
+            public_offer_output_v1_json_delete: '%env(KAFKA_TOPIC_PUBLIC_OFFER_OUTPUT_V1_JSON_DELETE)%'
+            # Long form: direction resolved from the roles
+            public_offer_input_v1_json_delete:
+                name: '%env(KAFKA_TOPIC_PUBLIC_OFFER_INPUT_V1_JSON_DELETE)%'
+                roles: [consumer]
+```
+
+Accepted roles are `producer` and `consumer`. Both roles give a topic that can be produced to and consumed. Without roles (or with an empty list), the direction is derived from the name.
+
+Producing to a topic that cannot be produced to, or consuming a topic that cannot be consumed, throws an `UnauthorizedTopicOperationException`.
+
 ## Broker authentication
 
 Authentication is **optional** — typically required in production, but not in local development.
@@ -172,6 +200,8 @@ php bin/console rossel:kafka:listen
 # Listen to specific topics (comma-separated topic values)
 php bin/console rossel:kafka:listen --topics=public_subscription_input_v1_json_delete,public_offer_input_v1_json_delete
 ```
+
+Without `--topics`, configured topics that cannot be consumed are skipped with a warning. See [Topic roles](#topic-roles).
 
 ### Fetch topic metadata
 

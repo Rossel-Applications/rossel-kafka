@@ -17,6 +17,22 @@ enum TopicDirection
     /** Topic supports both consumption and production. */
     case BOTH;
 
+    /**
+     * @param array<array-key, TopicRole> $roles
+     */
+    public static function fromRoles(array $roles): self
+    {
+        $canProduce = \in_array(TopicRole::PRODUCER, $roles, true);
+        $canConsume = \in_array(TopicRole::CONSUMER, $roles, true);
+
+        return match (true) {
+            $canProduce && $canConsume => self::BOTH,
+            $canProduce => self::PRODUCE,
+            $canConsume => self::CONSUME,
+            default => throw new \InvalidArgumentException('At least one topic role is required to resolve a direction.'),
+        };
+    }
+
     public static function fromConfigKey(TopicConfigKeys $configKey): self
     {
         $value = strtolower($configKey->value);

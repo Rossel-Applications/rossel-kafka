@@ -276,6 +276,48 @@ final class RosselKafkaExtensionTest extends TestCase
         self::assertSame('my.log.topic', $topics['public_log_output_v1_json_delete']);
     }
 
+    #[Test]
+    public function loadKeepsTopicsParameterAsNamesWithLongForm(): void
+    {
+        $config = [
+            'broker' => [
+                'url' => 'kafka://localhost:9092',
+                'topics' => [
+                    'public_subscription_input_v1_json_delete' => ['name' => 'my.sub.topic', 'roles' => ['consumer']],
+                ],
+            ],
+            'producer' => ['app_name' => 'test-app'],
+        ];
+
+        $this->load($config);
+
+        /** @var array<string, string|null> $topics */
+        $topics = $this->param('broker.topics');
+        self::assertSame('my.sub.topic', $topics['public_subscription_input_v1_json_delete']);
+    }
+
+    #[Test]
+    public function loadSetsTopicsRolesParameterOnlyForTopicsWithRoles(): void
+    {
+        $config = [
+            'broker' => [
+                'url' => 'kafka://localhost:9092',
+                'topics' => [
+                    'public_subscription_input_v1_json_delete' => ['name' => 'my.sub.topic', 'roles' => ['consumer']],
+                    'public_log_output_v1_json_delete' => 'my.log.topic',
+                ],
+            ],
+            'producer' => ['app_name' => 'test-app'],
+        ];
+
+        $this->load($config);
+
+        self::assertSame(
+            ['public_subscription_input_v1_json_delete' => ['consumer']],
+            $this->param('broker.topics_roles'),
+        );
+    }
+
     // -------------------------------------------------------------------------
     // autoconfiguration tag
     // -------------------------------------------------------------------------

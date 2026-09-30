@@ -167,12 +167,12 @@ final class ConfigurationTest extends TestCase
 
         /** @var array<string, mixed> $broker */
         $broker = $config[RootConfigKeys::BROKER->value];
-        /** @var array<string, string|null> $topics */
+        /** @var array<string, array{name: string|null, roles: list<string>}> $topics */
         $topics = $broker[BrokerConfigKeys::TOPICS->value];
 
         foreach (TopicConfigKeys::cases() as $key) {
             self::assertArrayHasKey($key->value, $topics);
-            self::assertNull($topics[$key->value], "Topic {$key->value} should default to null");
+            self::assertSame(['name' => null, 'roles' => []], $topics[$key->value], "Topic {$key->value} should default to a null name without roles");
         }
     }
 
@@ -192,11 +192,58 @@ final class ConfigurationTest extends TestCase
 
         /** @var array<string, mixed> $broker */
         $broker = $config[RootConfigKeys::BROKER->value];
-        /** @var array<string, string|null> $topics */
+        /** @var array<string, array{name: string|null, roles: list<string>}> $topics */
         $topics = $broker[BrokerConfigKeys::TOPICS->value];
 
-        self::assertSame('my.log.topic', $topics[TopicConfigKeys::KAFKA_TOPIC_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->value]);
-        self::assertSame('my.sub.topic', $topics[TopicConfigKeys::KAFKA_TOPIC_PUBLIC_SUBSCRIPTION_INPUT_V1_JSON_DELETE->value]);
+        self::assertSame(['name' => 'my.log.topic', 'roles' => []], $topics[TopicConfigKeys::KAFKA_TOPIC_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->value]);
+        self::assertSame(['name' => 'my.sub.topic', 'roles' => []], $topics[TopicConfigKeys::KAFKA_TOPIC_PUBLIC_SUBSCRIPTION_INPUT_V1_JSON_DELETE->value]);
+    }
+
+    #[Test]
+    public function topicsAcceptLongFormWithRoles(): void
+    {
+        $topics = $this->processTopics([
+            TopicConfigKeys::KAFKA_TOPIC_PUBLIC_SUBSCRIPTION_INPUT_V1_JSON_DELETE->value => [
+                'name' => 'my.sub.topic',
+                'roles' => ['consumer'],
+            ],
+            TopicConfigKeys::KAFKA_TOPIC_PUBLIC_OFFER_OUTPUT_V1_JSON_DELETE->value => [
+                'name' => 'my.offer.topic',
+            ],
+        ]);
+
+        self::assertSame(['name' => 'my.sub.topic', 'roles' => ['consumer']], $topics[TopicConfigKeys::KAFKA_TOPIC_PUBLIC_SUBSCRIPTION_INPUT_V1_JSON_DELETE->value]);
+        self::assertSame(['name' => 'my.offer.topic', 'roles' => []], $topics[TopicConfigKeys::KAFKA_TOPIC_PUBLIC_OFFER_OUTPUT_V1_JSON_DELETE->value]);
+    }
+
+    #[Test]
+    public function topicNullIsNormalized(): void
+    {
+        $topics = $this->processTopics([
+            TopicConfigKeys::KAFKA_TOPIC_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->value => null,
+        ]);
+
+        self::assertSame(['name' => null, 'roles' => []], $topics[TopicConfigKeys::KAFKA_TOPIC_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->value]);
+    }
+
+    #[Test]
+    public function topicRolesRejectUnknownRole(): void
+    {
+        $this->expectException(InvalidConfigurationException::class);
+
+        $this->processTopics([
+            TopicConfigKeys::KAFKA_TOPIC_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->value => ['name' => 'topic', 'roles' => ['admin']],
+        ]);
+    }
+
+    #[Test]
+    public function topicRolesRejectDuplicates(): void
+    {
+        $this->expectException(InvalidConfigurationException::class);
+
+        $this->processTopics([
+            TopicConfigKeys::KAFKA_TOPIC_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->value => ['name' => 'topic', 'roles' => ['producer', 'producer']],
+        ]);
     }
 
     /**
@@ -255,6 +302,30 @@ final class ConfigurationTest extends TestCase
     private function process(array $config): array
     {
         return $this->processor->processConfiguration($this->configuration, [$config]);
+    }
+
+    /**
+     * @param array<string, mixed> $topics
+     *
+     * @return array<mixed>
+     */
+    private function processTopics(array $topics): array
+    {
+        $config = $this->process([
+            RootConfigKeys::BROKER->value => [
+                BrokerConfigKeys::URL->value => 'kafka://host:9092',
+                BrokerConfigKeys::TOPICS->value => $topics,
+            ],
+            RootConfigKeys::PRODUCER->value => [ProducerConfigKeys::APP_NAME->value => 'app'],
+        ]);
+
+        /** @var array<string, mixed> $broker */
+        $broker = $config[RootConfigKeys::BROKER->value];
+
+        $topics = $broker[BrokerConfigKeys::TOPICS->value];
+        self::assertIsArray($topics);
+
+        return $topics;
     }
 
     /**

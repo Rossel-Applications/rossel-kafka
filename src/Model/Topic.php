@@ -17,8 +17,9 @@ final readonly class Topic
         private string $name,
         /** @var array<array-key, MessageType> */
         private array $messageTypes = [],
+        ?TopicDirection $direction = null,
     ) {
-        $this->direction = TopicDirection::fromConfigKey($configKey);
+        $this->direction = $direction ?? TopicDirection::fromConfigKey($configKey);
     }
 
     public function getConfigKey(): TopicConfigKeys

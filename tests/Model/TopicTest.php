@@ -10,6 +10,7 @@ use PHPUnit\Framework\TestCase;
 use Rossel\RosselKafka\Enum\Config\Broker\TopicConfigKeys;
 use Rossel\RosselKafka\Enum\MessageHeaders\MessageType;
 use Rossel\RosselKafka\Enum\Topic\TopicDirection;
+use Rossel\RosselKafka\Enum\Topic\TopicRole;
 use Rossel\RosselKafka\Model\Topic;
 
 final class TopicTest extends TestCase
@@ -137,6 +138,49 @@ final class TopicTest extends TestCase
         $topic = new Topic(configKey: $configKey, name: 'topic');
 
         self::assertSame($expected, $topic->getDirection());
+    }
+
+    #[Test]
+    public function explicitDirectionOverridesDirectionDerivedFromConfigKey(): void
+    {
+        $topic = new Topic(
+            configKey: TopicConfigKeys::KAFKA_TOPIC_PUBLIC_SUBSCRIPTION_INPUT_V1_JSON_DELETE,
+            name: 'subscription.input',
+            direction: TopicDirection::CONSUME,
+        );
+
+        self::assertSame(TopicDirection::CONSUME, $topic->getDirection());
+        self::assertTrue($topic->isConsumable());
+        self::assertFalse($topic->isProducible());
+    }
+
+    /**
+     * @return iterable<string, array{list<TopicRole>, TopicDirection}>
+     */
+    public static function rolesProvider(): iterable
+    {
+        yield 'producer → PRODUCE' => [[TopicRole::PRODUCER], TopicDirection::PRODUCE];
+        yield 'consumer → CONSUME' => [[TopicRole::CONSUMER], TopicDirection::CONSUME];
+        yield 'producer + consumer → BOTH' => [[TopicRole::PRODUCER, TopicRole::CONSUMER], TopicDirection::BOTH];
+        yield 'consumer + producer → BOTH' => [[TopicRole::CONSUMER, TopicRole::PRODUCER], TopicDirection::BOTH];
+    }
+
+    /**
+     * @param list<TopicRole> $roles
+     */
+    #[Test]
+    #[DataProvider('rolesProvider')]
+    public function directionIsResolvedFromRoles(array $roles, TopicDirection $expected): void
+    {
+        self::assertSame($expected, TopicDirection::fromRoles($roles));
+    }
+
+    #[Test]
+    public function directionFromEmptyRolesThrows(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+
+        TopicDirection::fromRoles([]);
     }
 
     // -------------------------------------------------------------------------
