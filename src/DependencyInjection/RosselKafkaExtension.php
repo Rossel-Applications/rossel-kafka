@@ -6,6 +6,7 @@ namespace Rossel\RosselKafka\DependencyInjection;
 
 use Rossel\RosselKafka\Consumer\ConsumerInterface;
 use Rossel\RosselKafka\Enum\Config\Broker\BrokerConfigKeys;
+use Rossel\RosselKafka\Enum\Config\Broker\TopicConfigKeys;
 use Rossel\RosselKafka\Enum\Config\Producer\ProducerConfigKeys;
 use Rossel\RosselKafka\Enum\Config\RootConfigKeys;
 use Rossel\RosselKafka\RosselKafkaBundle;
@@ -28,7 +29,7 @@ final class RosselKafkaExtension extends Extension implements PrependExtensionIn
          *   broker: array{
          *     url: string,
          *     debug: string|null,
-         *     topics: array<string, string|null>,
+         *     topics: array<string, array{name: string|null, roles: list<string>}>,
          *     authentication: array{
          *       sasl_username: string|null,
          *       sasl_password: string|null,
@@ -55,7 +56,15 @@ final class RosselKafkaExtension extends Extension implements PrependExtensionIn
         $nullable = static fn (?string $v): ?string => (null === $v || '' === $v) ? null : $v;
 
         $container->setParameter($bundleName.'.'.$brokerKey.'.'.BrokerConfigKeys::URL->value, $brokerConfig[BrokerConfigKeys::URL->value]);
-        $container->setParameter($bundleName.'.'.$brokerKey.'.'.BrokerConfigKeys::TOPICS->value, $brokerConfig[BrokerConfigKeys::TOPICS->value]);
+        $topicsConfig = $brokerConfig[BrokerConfigKeys::TOPICS->value];
+        $container->setParameter($bundleName.'.'.$brokerKey.'.'.BrokerConfigKeys::TOPICS->value, array_map(
+            static fn (array $topic): ?string => $topic[TopicConfigKeys::NAME],
+            $topicsConfig,
+        ));
+        $container->setParameter($bundleName.'.'.$brokerKey.'.'.BrokerConfigKeys::TOPICS->value.'_'.TopicConfigKeys::ROLES, array_filter(array_map(
+            static fn (array $topic): array => $topic[TopicConfigKeys::ROLES],
+            $topicsConfig,
+        )));
         $container->setParameter($bundleName.'.'.$brokerKey.'.'.BrokerConfigKeys::DEBUG->value, $nullable($brokerConfig[BrokerConfigKeys::DEBUG->value]));
         $container->setParameter($bundleName.'.'.$brokerKey.'.'.$authKey.'.'.BrokerConfigKeys::SASL_USERNAME->value, $nullable($authConfig[BrokerConfigKeys::SASL_USERNAME->value]));
         $container->setParameter($bundleName.'.'.$brokerKey.'.'.$authKey.'.'.BrokerConfigKeys::SASL_PASSWORD->value, $nullable($authConfig[BrokerConfigKeys::SASL_PASSWORD->value]));

@@ -154,6 +154,26 @@ final class ListenCommandTest extends TestCase
         $tester->execute([]);
     }
 
+    #[Test]
+    public function nonConsumableTopicsAreSkippedWithWarningWhenNoOptionProvided(): void
+    {
+        $this->fetcher->method('getAll')->willReturn([
+            $this->logTopic->getConfigKey()->name => $this->logTopic,
+            $this->subTopic->getConfigKey()->name => $this->subTopic,
+        ]);
+
+        $this->orchestrator
+            ->expects($this->once())
+            ->method('listen')
+            ->with($this->identicalTo($this->logTopic));
+
+        $tester = new CommandTester($this->command);
+        $exitCode = $tester->execute([]);
+
+        self::assertSame(Command::SUCCESS, $exitCode);
+        self::assertStringContainsString('Skipping topic "sub.input"', $tester->getDisplay());
+    }
+
     // -------------------------------------------------------------------------
     // Single-topic mode — failure
     // -------------------------------------------------------------------------
