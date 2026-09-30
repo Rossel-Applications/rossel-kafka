@@ -24,6 +24,11 @@ rossel_kafka:
         # accepted values: generic, broker, topic, metadata, feature, queue, msg, protocol, cgrp, security, fetch, interceptor, plugin, consumer, admin, eos, mock, assignor, conf, telemetry, all
         debug: '%env(default::ROSSEL_KAFKA_BROKER_DEBUG)%'
 
+        # Short form: direction derived from the topic name (input: produce, output: consume, inout: both).
+        # Long form, when the owner's manifest grants other roles to your app (accepted roles: producer, consumer):
+        #   public_offer_input_v1_json_delete:
+        #       name: '%env(default::KAFKA_TOPIC_PUBLIC_OFFER_INPUT_V1_JSON_DELETE)%'
+        #       roles: [consumer]
         topics:
             account_api_public_log_output_v1_json_delete: '%env(default::KAFKA_TOPIC_ACCOUNT_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE)%'
             authentication_api_public_log_output_v1_json_delete: '%env(default::KAFKA_TOPIC_AUTHENTICATION_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE)%'

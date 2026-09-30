@@ -6,6 +6,8 @@ namespace Rossel\RosselKafka\Service;
 
 use Rossel\RosselKafka\Enum\Config\Broker\TopicConfigKeys;
 use Rossel\RosselKafka\Enum\MessageHeaders\MessageType;
+use Rossel\RosselKafka\Enum\Topic\TopicDirection;
+use Rossel\RosselKafka\Enum\Topic\TopicRole;
 use Rossel\RosselKafka\Exception\UnconfiguredTopicException;
 use Rossel\RosselKafka\Model\Topic;
 
@@ -122,10 +124,13 @@ final class KafkaTopicsFetcher implements KafkaTopicsFetcherInterface
     private array $topics = [];
 
     /**
-     * @param array<string, string|null> $topics
+     * @param array<string, string|null>  $topics      topic names, indexed by topic config key
+     * @param array<string, list<string>> $topicsRoles roles granted on each topic, indexed by topic config key;
+     *                                                 topics without roles get a direction derived from their name
      */
     public function __construct(
         array $topics,
+        private readonly array $topicsRoles = [],
     ) {
         $this->initializeTopics($topics);
     }
@@ -181,11 +186,13 @@ final class KafkaTopicsFetcher implements KafkaTopicsFetcherInterface
         $validatedTopicConfigKey = TopicConfigKeys::from($topicConfigKey);
 
         $messages = self::KAFKA_TOPIC_MESSAGES_MAPPINGS[$validatedTopicConfigKey->name] ?? [];
+        $roles = $this->topicsRoles[$topicConfigKey] ?? [];
 
         $this->topics[$validatedTopicConfigKey->name] = new Topic(
             configKey: $validatedTopicConfigKey,
             name: $topicName,
             messageTypes: $messages,
+            direction: [] === $roles ? null : TopicDirection::fromRoles(array_map(TopicRole::from(...), $roles)),
         );
     }
 }

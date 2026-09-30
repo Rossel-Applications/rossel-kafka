@@ -8,7 +8,9 @@ use Rossel\RosselKafka\Enum\Config\Broker\BrokerConfigKeys;
 use Rossel\RosselKafka\Enum\Config\Broker\TopicConfigKeys;
 use Rossel\RosselKafka\Enum\Config\Producer\ProducerConfigKeys;
 use Rossel\RosselKafka\Enum\Config\RootConfigKeys;
+use Rossel\RosselKafka\Enum\Topic\TopicRole;
 use Rossel\RosselKafka\RosselKafkaBundle;
+use Symfony\Component\Config\Definition\Builder\NodeDefinition;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 
@@ -70,34 +72,7 @@ class Configuration implements ConfigurationInterface
                     ->defaultNull()
                     ->info('Comma-separated list of rdkafka debug contexts (e.g. "broker,topic,msg"). Accepted values: generic, broker, topic, metadata, feature, queue, msg, protocol, cgrp, security, fetch, interceptor, plugin, consumer, admin, eos, mock, assignor, conf, telemetry, all. Disabled by default.')
                     ->end()
-                ->arrayNode(BrokerConfigKeys::TOPICS->value)
-                    ->addDefaultsIfNotSet()
-                    ->children()
-                    ->scalarNode(TopicConfigKeys::KAFKA_TOPIC_ACCOUNT_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->value)->defaultNull()->end()
-                    ->scalarNode(TopicConfigKeys::KAFKA_TOPIC_AUTHENTICATION_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->value)->defaultNull()->end()
-                    ->scalarNode(TopicConfigKeys::KAFKA_TOPIC_PUBLIC_DEAD_LETTER_INOUT_V1_JSON_DELETE_D30->value)->defaultNull()->end()
-                    ->scalarNode(TopicConfigKeys::KAFKA_TOPIC_ERP_SUBSCRIPTION_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->value)->defaultNull()->end()
-                    ->scalarNode(TopicConfigKeys::KAFKA_TOPIC_PUBLIC_INHERITANCE_OUTPUT_V1_JSON_DELETE->value)->defaultNull()->end()
-                    ->scalarNode(TopicConfigKeys::KAFKA_TOPIC_INHERITANCE_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->value)->defaultNull()->end()
-                    ->scalarNode(TopicConfigKeys::KAFKA_TOPIC_NOTIFICATION_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->value)->defaultNull()->end()
-                    ->scalarNode(TopicConfigKeys::KAFKA_TOPIC_PUBLIC_NOTIFICATION_INPUT_V1_JSON_DELETE->value)->defaultNull()->end()
-                    ->scalarNode(TopicConfigKeys::KAFKA_TOPIC_OFFER_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->value)->defaultNull()->end()
-                    ->scalarNode(TopicConfigKeys::KAFKA_TOPIC_PUBLIC_OFFER_OUTPUT_V1_JSON_DELETE->value)->defaultNull()->end()
-                    ->scalarNode(TopicConfigKeys::KAFKA_TOPIC_PROFILE_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->value)->defaultNull()->end()
-                    ->scalarNode(TopicConfigKeys::KAFKA_TOPIC_PURCHASE_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->value)->defaultNull()->end()
-                    ->scalarNode(TopicConfigKeys::KAFKA_TOPIC_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->value)->defaultNull()->end()
-                    ->scalarNode(TopicConfigKeys::KAFKA_TOPIC_PUBLIC_OFFER_INPUT_V1_JSON_DELETE->value)->defaultNull()->end()
-                    ->scalarNode(TopicConfigKeys::KAFKA_TOPIC_PUBLIC_SUBSCRIPTION_INPUT_V1_JSON_DELETE->value)->defaultNull()->end()
-                    ->scalarNode(TopicConfigKeys::KAFKA_TOPIC_PUBLIC_SUBSCRIPTION_OUTPUT_V1_JSON_DELETE->value)->defaultNull()->end()
-                    ->scalarNode(TopicConfigKeys::KAFKA_TOPIC_PUBLIC_CONTACT_INPUT_V1_JSON_DELETE->value)->defaultNull()->end()
-                    ->scalarNode(TopicConfigKeys::KAFKA_TOPIC_INPUT_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->value)->defaultNull()->end()
-                    ->scalarNode(TopicConfigKeys::KAFKA_TOPIC_OUTPUT_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->value)->defaultNull()->end()
-                    ->scalarNode(TopicConfigKeys::KAFKA_TOPIC_PUBLIC_PROFILE_OUTPUT_V1_JSON_DELETE->value)->defaultNull()->end()
-                    ->scalarNode(TopicConfigKeys::KAFKA_TOPIC_PUBLIC_B2B_CUSTOMER_OUTPUT_V1_JSON_DELETE->value)->defaultNull()->end()
-                    ->scalarNode(TopicConfigKeys::KAFKA_TOPIC_PUBLIC_B2B_SALES_REP_OUTPUT_V1_JSON_DELETE->value)->defaultNull()->end()
-                    ->scalarNode(TopicConfigKeys::KAFKA_TOPIC_PUBLIC_B2B_REFERENCE_ITEM_OUTPUT_V1_JSON_DELETE->value)->defaultNull()->end()
-                    ->end()
-                    ->end()
+                ->append($this->addTopicsNode())
                 ->end()
             ->end()
             ->arrayNode(RootConfigKeys::PRODUCER->value)
@@ -111,5 +86,49 @@ class Configuration implements ConfigurationInterface
             ->end();
 
         return $treeBuilder;
+    }
+
+    /**
+     * Each topic accepts either its name as a plain string, or an array with its name and
+     * the roles granted to the application in the topic owner's manifest. Without roles, the
+     * topic direction is derived from its name.
+     */
+    private function addTopicsNode(): NodeDefinition
+    {
+        $node = (new TreeBuilder(BrokerConfigKeys::TOPICS->value))->getRootNode();
+        $children = $node->addDefaultsIfNotSet()->children();
+
+        foreach (TopicConfigKeys::cases() as $topicConfigKey) {
+            $children
+                ->arrayNode($topicConfigKey->value)
+                    ->addDefaultsIfNotSet()
+                    ->beforeNormalization()
+                        ->ifString()
+                        ->then(static fn (string $name): array => [TopicConfigKeys::NAME => $name])
+                    ->end()
+                    ->beforeNormalization()
+                        ->ifNull()
+                        ->then(static fn (): array => [TopicConfigKeys::NAME => null])
+                    ->end()
+                    ->children()
+                        ->scalarNode(TopicConfigKeys::NAME)
+                            ->defaultNull()
+                            ->info('The topic name on the broker.')
+                            ->end()
+                        ->arrayNode(TopicConfigKeys::ROLES)
+                            ->info('Roles granted to the application on this topic (producer, consumer). When empty, the direction is derived from the topic name.')
+                            ->enumPrototype()
+                                ->values(array_map(static fn (TopicRole $role): string => $role->value, TopicRole::cases()))
+                            ->end()
+                            ->validate()
+                                ->ifTrue(static fn (array $roles): bool => \count($roles) !== \count(array_unique($roles)))
+                                ->thenInvalid('Duplicate roles in %s.')
+                            ->end()
+                        ->end()
+                    ->end()
+                ->end();
+        }
+
+        return $node;
     }
 }

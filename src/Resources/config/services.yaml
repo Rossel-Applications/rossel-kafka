@@ -35,6 +35,7 @@ services:
   Rossel\RosselKafka\Service\KafkaTopicsFetcher:
     arguments:
       $topics: '%rossel_kafka.broker.topics%'
+      $topicsRoles: '%rossel_kafka.broker.topics_roles%'
 
   Rossel\RosselKafka\Orchestrator\ConsumptionOrchestrator:
     $consumers: !tagged_iterator 'rossel_kafka.consumer'

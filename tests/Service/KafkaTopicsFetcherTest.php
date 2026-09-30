@@ -220,6 +220,41 @@ final class KafkaTopicsFetcherTest extends TestCase
         self::assertTrue($topic->isProducible());
     }
 
+    #[Test]
+    public function rolesOverrideDirectionDerivedFromName(): void
+    {
+        $fetcher = new KafkaTopicsFetcher(
+            [
+                TopicConfigKeys::KAFKA_TOPIC_PUBLIC_SUBSCRIPTION_INPUT_V1_JSON_DELETE->value => 'subscription.input',
+                TopicConfigKeys::KAFKA_TOPIC_PUBLIC_OFFER_OUTPUT_V1_JSON_DELETE->value => 'offer.output',
+            ],
+            [
+                TopicConfigKeys::KAFKA_TOPIC_PUBLIC_SUBSCRIPTION_INPUT_V1_JSON_DELETE->value => ['consumer'],
+                TopicConfigKeys::KAFKA_TOPIC_PUBLIC_OFFER_OUTPUT_V1_JSON_DELETE->value => ['producer', 'consumer'],
+            ],
+        );
+
+        self::assertSame(TopicDirection::CONSUME, $fetcher->get(TopicConfigKeys::KAFKA_TOPIC_PUBLIC_SUBSCRIPTION_INPUT_V1_JSON_DELETE)->getDirection());
+        self::assertSame(TopicDirection::BOTH, $fetcher->get(TopicConfigKeys::KAFKA_TOPIC_PUBLIC_OFFER_OUTPUT_V1_JSON_DELETE)->getDirection());
+    }
+
+    #[Test]
+    public function topicsWithoutRolesKeepDirectionDerivedFromName(): void
+    {
+        $fetcher = new KafkaTopicsFetcher(
+            [
+                TopicConfigKeys::KAFKA_TOPIC_PUBLIC_SUBSCRIPTION_INPUT_V1_JSON_DELETE->value => 'subscription.input',
+                TopicConfigKeys::KAFKA_TOPIC_PUBLIC_OFFER_OUTPUT_V1_JSON_DELETE->value => 'offer.output',
+            ],
+            [
+                TopicConfigKeys::KAFKA_TOPIC_PUBLIC_OFFER_OUTPUT_V1_JSON_DELETE->value => [],
+            ],
+        );
+
+        self::assertSame(TopicDirection::PRODUCE, $fetcher->get(TopicConfigKeys::KAFKA_TOPIC_PUBLIC_SUBSCRIPTION_INPUT_V1_JSON_DELETE)->getDirection());
+        self::assertSame(TopicDirection::CONSUME, $fetcher->get(TopicConfigKeys::KAFKA_TOPIC_PUBLIC_OFFER_OUTPUT_V1_JSON_DELETE)->getDirection());
+    }
+
     // -------------------------------------------------------------------------
     // Topic message type mapping
     // -------------------------------------------------------------------------

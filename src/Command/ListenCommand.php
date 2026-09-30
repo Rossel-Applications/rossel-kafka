@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Rossel\RosselKafka\Command;
 
 use Psr\Log\LoggerInterface;
+use Rossel\RosselKafka\Command\Output\ListenOutputStrategyInterface;
 use Rossel\RosselKafka\Command\Output\PlainListenOutputStrategy;
 use Rossel\RosselKafka\Command\Output\TableListenOutputStrategy;
 use Rossel\RosselKafka\Enum\Config\Broker\TopicConfigKeys;
@@ -55,7 +56,7 @@ final class ListenCommand extends Command
         /** @var string $topicsInput */
         $topicsInput = $input->getOption('topics');
 
-        $topics = $this->extractConsumableTopicsFromString($topicsInput);
+        $topics = $this->extractConsumableTopicsFromString($topicsInput, $outputStrategy);
 
         if (0 === ($topicsCount = \count($topics))) {
             $message = 'This topic is not configured for consumption.';
@@ -159,15 +160,29 @@ final class ListenCommand extends Command
     }
 
     /**
+     * Without explicit topics, configured topics that are not consumable are skipped with a warning.
+     *
      * @return list<Topic>
      */
-    private function extractConsumableTopicsFromString(?string $topics): array
+    private function extractConsumableTopicsFromString(?string $topics, ListenOutputStrategyInterface $outputStrategy): array
     {
-        if (null === $topics || '' === str_replace([',', ' '], '', $topics)) {
-            return array_values($this->kafkaTopicsFetcher->getAll());
-        }
-
         $results = [];
+
+        if (null === $topics || '' === str_replace([',', ' '], '', $topics)) {
+            foreach ($this->kafkaTopicsFetcher->getAll() as $topic) {
+                if ($topic->isConsumable()) {
+                    $results[] = $topic;
+
+                    continue;
+                }
+
+                $message = \sprintf('Skipping topic "%s": not consumable (direction: %s).', $topic->getName(), $topic->getDirection()->name);
+                $outputStrategy->warning($message);
+                $this->logger->warning($message);
+            }
+
+            return $results;
+        }
 
         foreach (explode(',', $topics) as $topicString) {
             $resolvedTopic = $this->kafkaTopicsFetcher->get(TopicConfigKeys::from(trim($topicString)));

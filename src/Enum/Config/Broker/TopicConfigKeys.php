@@ -6,6 +6,12 @@ namespace Rossel\RosselKafka\Enum\Config\Broker;
 
 enum TopicConfigKeys: string
 {
+    /** Sub-key holding the topic name on the broker. */
+    public const NAME = 'name';
+
+    /** Sub-key holding the roles granted to the application on the topic. */
+    public const ROLES = 'roles';
+
     case KAFKA_TOPIC_ACCOUNT_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE = 'account_api_public_log_output_v1_json_delete';
     case KAFKA_TOPIC_AUTHENTICATION_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE = 'authentication_api_public_log_output_v1_json_delete';
     case KAFKA_TOPIC_PUBLIC_DEAD_LETTER_INOUT_V1_JSON_DELETE_D30 = 'public_dead_letter_inout_v1_json_delete_d30';
