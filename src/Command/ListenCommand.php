@@ -11,17 +11,16 @@ use Rossel\RosselKafka\Enum\Config\Broker\TopicConfigKeys;
 use Rossel\RosselKafka\Model\Topic;
 use Rossel\RosselKafka\Orchestrator\ConsumptionOrchestratorInterface;
 use Rossel\RosselKafka\Service\KafkaTopicsFetcherInterface;
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Process\Process;
 
+#[AsCommand(name: 'rossel:kafka:listen', description: 'Launch Kafka listeners')]
 final class ListenCommand extends Command
 {
-    private const COMMAND_NAME = 'rossel:kafka:listen';
-    private const COMMAND_DESCRIPTION = 'Launch Kafka listeners';
-
     private const COMMAND_OPTION_TOPIC_NAME = 'topics';
     private const COMMAND_OPTION_TOPIC_SHORTCUT = 't';
     private const COMMAND_OPTION_TOPIC_DESCRIPTION = 'Topics to listen to (separated by comma)';
@@ -31,14 +30,11 @@ final class ListenCommand extends Command
         private readonly KafkaTopicsFetcherInterface $kafkaTopicsFetcher,
         private readonly LoggerInterface $logger,
     ) {
-        parent::__construct(
-            name: self::COMMAND_NAME,
-        );
+        parent::__construct();
     }
 
     protected function configure(): void
     {
-        $this->setDescription(self::COMMAND_DESCRIPTION);
         $this->addOption(
             name: self::COMMAND_OPTION_TOPIC_NAME,
             shortcut: self::COMMAND_OPTION_TOPIC_SHORTCUT,
@@ -100,7 +96,7 @@ final class ListenCommand extends Command
      */
     private function runParallel(array $topics, TableListenOutputStrategy $strategy): int
     {
-        $baseArgs = ['php', 'bin/console', self::COMMAND_NAME, '--no-interaction'];
+        $baseArgs = ['php', 'bin/console', (string) $this->getName(), '--no-interaction'];
 
         /** @var list<array{topic: Topic, process: Process}> $running */
         $running = [];

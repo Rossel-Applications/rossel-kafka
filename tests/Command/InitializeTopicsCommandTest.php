@@ -12,6 +12,7 @@ use Rossel\RosselKafka\Enum\Config\Broker\TopicConfigKeys;
 use Rossel\RosselKafka\Enum\MessageHeaders\MessageType;
 use Rossel\RosselKafka\Model\Topic;
 use Rossel\RosselKafka\Service\KafkaTopicsFetcherInterface;
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
 
@@ -45,6 +46,17 @@ final class InitializeTopicsCommandTest extends TestCase
     public function commandDescriptionIsSet(): void
     {
         self::assertNotEmpty($this->command->getDescription());
+    }
+
+    #[Test]
+    public function shouldBeLazyLoadableWhenDeclaredWithAsCommand(): void
+    {
+        $attributes = (new \ReflectionClass(InitializeTopicsCommand::class))->getAttributes(AsCommand::class);
+
+        self::assertCount(1, $attributes);
+        $asCommand = $attributes[0]->newInstance();
+        self::assertSame('rossel:kafka:initialize-topics', $asCommand->name);
+        self::assertNotEmpty($asCommand->description);
     }
 
     // -------------------------------------------------------------------------
