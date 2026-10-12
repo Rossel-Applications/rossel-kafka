@@ -5,27 +5,19 @@ declare(strict_types=1);
 namespace Rossel\RosselKafka\Command;
 
 use Rossel\RosselKafka\Service\KafkaTopicsFetcherInterface;
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Process\Process;
 
+#[AsCommand(name: 'rossel:kafka:initialize-topics', description: 'Initializes topics')]
 final class InitializeTopicsCommand extends Command
 {
-    private const COMMAND_NAME = 'rossel:kafka:initialize-topics';
-    private const COMMAND_DESCRIPTION = 'Initializes topics';
-
     public function __construct(
         private readonly KafkaTopicsFetcherInterface $kafkaTopicsFetcher,
     ) {
-        parent::__construct(
-            name: self::COMMAND_NAME,
-        );
-    }
-
-    protected function configure(): void
-    {
-        $this->setDescription(self::COMMAND_DESCRIPTION);
+        parent::__construct();
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int

@@ -14,6 +14,7 @@ use Rossel\RosselKafka\Enum\Config\Broker\TopicConfigKeys;
 use Rossel\RosselKafka\Model\Topic;
 use Rossel\RosselKafka\Orchestrator\ConsumptionOrchestratorInterface;
 use Rossel\RosselKafka\Service\KafkaTopicsFetcherInterface;
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
 
@@ -69,6 +70,17 @@ final class ListenCommandTest extends TestCase
     public function commandHasTopicsOption(): void
     {
         self::assertTrue($this->command->getDefinition()->hasOption('topics'));
+    }
+
+    #[Test]
+    public function shouldBeLazyLoadableWhenDeclaredWithAsCommand(): void
+    {
+        $attributes = (new \ReflectionClass(ListenCommand::class))->getAttributes(AsCommand::class);
+
+        self::assertCount(1, $attributes);
+        $asCommand = $attributes[0]->newInstance();
+        self::assertSame('rossel:kafka:listen', $asCommand->name);
+        self::assertNotEmpty($asCommand->description);
     }
 
     // -------------------------------------------------------------------------
