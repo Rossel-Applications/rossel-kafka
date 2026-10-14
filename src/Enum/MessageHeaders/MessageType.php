@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Rossel\RosselKafka\Enum\MessageHeaders;
 
-use Symfony\Component\HttpFoundation\Exception\BadRequestException;
-
 enum MessageType
 {
     case B2B_CREATE_OR_UPDATE_ACTIVITY;
@@ -56,6 +54,6 @@ enum MessageType
             }
         }
 
-        throw new BadRequestException(\sprintf('%s case %s not found.', self::class, $name));
+        throw new \ValueError(\sprintf('%s case %s not found.', self::class, $name));
     }
 }

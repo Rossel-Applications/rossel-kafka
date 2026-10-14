@@ -10,6 +10,7 @@ use Rossel\RosselKafka\Enum\Topic\TopicDirection;
 use Rossel\RosselKafka\Enum\Topic\TopicRole;
 use Rossel\RosselKafka\Exception\UnconfiguredTopicException;
 use Rossel\RosselKafka\Model\Topic;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 final class KafkaTopicsFetcher implements KafkaTopicsFetcherInterface
 {
@@ -98,7 +99,9 @@ final class KafkaTopicsFetcher implements KafkaTopicsFetcherInterface
      *                                                 topics without roles get a direction derived from their name
      */
     public function __construct(
+        #[Autowire(param: 'rossel_kafka.broker.topics')]
         array $topics,
+        #[Autowire(param: 'rossel_kafka.broker.topics_roles')]
         private readonly array $topicsRoles = [],
     ) {
         $this->initializeTopics($topics);
