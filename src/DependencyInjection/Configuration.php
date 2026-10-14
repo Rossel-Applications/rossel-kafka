@@ -82,6 +82,10 @@ class Configuration implements ConfigurationInterface
                     ->cannotBeEmpty()
                     ->info('The name of the application, used to identify the app producing the messages.')
                     ->end()
+                ->booleanNode(ProducerConfigKeys::SEND_LOG_MESSAGES->value)
+                    ->defaultTrue()
+                    ->info('Send an EXEC_SUCCESS/EXEC_ERROR log message to the topic after each consumed message (default: true).')
+                    ->end()
                 ->end()
             ->end();
 

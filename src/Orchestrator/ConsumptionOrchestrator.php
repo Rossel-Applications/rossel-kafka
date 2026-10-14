@@ -30,6 +30,7 @@ final readonly class ConsumptionOrchestrator implements ConsumptionOrchestratorI
         private MessageFactoryInterface $messageFactory,
         private iterable $consumers,
         private string $appName,
+        private bool $sendLogMessages = true,
     ) {
     }
 
@@ -200,6 +201,10 @@ final readonly class ConsumptionOrchestrator implements ConsumptionOrchestratorI
         Topic $topic,
         bool $success,
     ): void {
+        if (!$this->sendLogMessages) {
+            return;
+        }
+
         $originalHeaders = $originalMessage->getRdKafkaMessage()->getHeaders();
 
         $areaValue = $originalHeaders[MessageHeaders::KEY_AREA];

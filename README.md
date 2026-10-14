@@ -42,6 +42,8 @@ rossel_kafka:
             public_b2b_reference_item_output_v1_json_delete: '%env(KAFKA_TOPIC_PUBLIC_B2B_REFERENCE_ITEM_OUTPUT_V1_JSON_DELETE)%'
     producer:
         app_name: '%env(ROSSEL_KAFKA_PRODUCER_APP_NAME)%'
+        # Send an EXEC_SUCCESS/EXEC_ERROR log message after each consumed message (default: true)
+        send_log_messages: true
 ```
 
 Each topic key maps to the actual Kafka topic name provided via environment variable.

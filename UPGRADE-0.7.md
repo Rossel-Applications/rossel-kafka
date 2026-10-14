@@ -50,3 +50,20 @@ enqueue:
 ### Consumed message bodies are kept verbatim
 
 `Message::getBody()` on a consumed message now returns the Kafka record value as it was received. Before, JSON bodies were decoded and re-encoded, so `{}` came back as `[]`, whitespace was stripped and a JSON string `"x"` came back as `x`.
+
+## New features
+
+### The producer is created on first send
+
+`KafkaConnector` no longer creates an rdkafka producer when it is built. The producer is created on the first `send()` to a producible topic, so an app that only consumes never opens one. No action required.
+
+### Log messages can be disabled
+
+After each consumed message, `ConsumptionOrchestrator` sends an `EXEC_SUCCESS` or `EXEC_ERROR` log message to the topic. The new `producer.send_log_messages` key turns this off. It defaults to `true`, so nothing changes unless you set it:
+
+```yaml
+rossel_kafka:
+    producer:
+        app_name: '%env(ROSSEL_KAFKA_PRODUCER_APP_NAME)%'
+        send_log_messages: false
+```
