@@ -130,6 +130,39 @@ final class KafkaTopicsFetcherTest extends TestCase
     }
 
     // -------------------------------------------------------------------------
+    // Log topics
+    // -------------------------------------------------------------------------
+
+    /**
+     * @return iterable<string, array{TopicConfigKeys}>
+     */
+    public static function logTopicProvider(): iterable
+    {
+        yield 'account_api' => [TopicConfigKeys::KAFKA_TOPIC_ACCOUNT_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE];
+        yield 'authentication_api' => [TopicConfigKeys::KAFKA_TOPIC_AUTHENTICATION_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE];
+        yield 'erp_subscription_api' => [TopicConfigKeys::KAFKA_TOPIC_ERP_SUBSCRIPTION_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE];
+        yield 'inheritance_api' => [TopicConfigKeys::KAFKA_TOPIC_INHERITANCE_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE];
+        yield 'notification_api' => [TopicConfigKeys::KAFKA_TOPIC_NOTIFICATION_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE];
+        yield 'offer_api' => [TopicConfigKeys::KAFKA_TOPIC_OFFER_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE];
+        yield 'profile_api' => [TopicConfigKeys::KAFKA_TOPIC_PROFILE_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE];
+        yield 'purchase_api' => [TopicConfigKeys::KAFKA_TOPIC_PURCHASE_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE];
+        yield 'input_api' => [TopicConfigKeys::KAFKA_TOPIC_INPUT_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE];
+        yield 'output_api' => [TopicConfigKeys::KAFKA_TOPIC_OUTPUT_API_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE];
+        yield 'public_log' => [TopicConfigKeys::KAFKA_TOPIC_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE];
+    }
+
+    #[Test]
+    #[DataProvider('logTopicProvider')]
+    public function logTopicSupportsExecSuccessAndExecErrorOnly(TopicConfigKeys $key): void
+    {
+        $fetcher = new KafkaTopicsFetcher([$key->value => 'log.topic']);
+
+        $messageTypes = $fetcher->get($key)->getMessageTypes();
+
+        self::assertSame([MessageType::EXEC_SUCCESS, MessageType::EXEC_ERROR], $messageTypes);
+    }
+
+    // -------------------------------------------------------------------------
     // getByMessageType()
     // -------------------------------------------------------------------------
 

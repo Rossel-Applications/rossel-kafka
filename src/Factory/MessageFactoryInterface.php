@@ -10,7 +10,6 @@ use Rossel\RosselKafka\Model\Message;
 interface MessageFactoryInterface
 {
     /**
-     * @throws \JsonException
      * @throws \Exception
      */
     public function createMessageFromRdKafka(RdKafkaMessage $message): Message;

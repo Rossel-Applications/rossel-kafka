@@ -140,36 +140,13 @@ final class TableListenOutputStrategy implements ListenOutputStrategyInterface
     }
 
     /**
-     * Wraps $text into lines of at most $maxLen characters.
-     * Breaks at the last space within the limit when possible.
+     * Wraps $text into lines of at most $maxLen characters, breaking at the last space when possible.
      *
      * @return list<string>
      */
     private function wrapText(string $text, int $maxLen): array
     {
-        if (mb_strlen($text) <= $maxLen) {
-            return [$text];
-        }
-
-        $lines = [];
-
-        while (mb_strlen($text) > $maxLen) {
-            $chunk = mb_substr($text, 0, $maxLen);
-            $lastSpace = mb_strrpos($chunk, ' ');
-
-            if (false !== $lastSpace && $lastSpace > (int) ($maxLen * 0.4)) {
-                $lines[] = mb_substr($text, 0, $lastSpace);
-                $text = mb_substr($text, $lastSpace + 1);
-            } else {
-                $lines[] = $chunk;
-                $text = mb_substr($text, $maxLen);
-            }
-        }
-
-        if ('' !== $text) {
-            $lines[] = $text;
-        }
-
-        return $lines;
+        // ponytail: byte-based, fine for ASCII topic and message type names; switch to an mb_ loop if UTF-8 messages show up.
+        return explode("\n", wordwrap($text, $maxLen, "\n", true));
     }
 }
