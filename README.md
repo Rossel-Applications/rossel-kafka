@@ -8,7 +8,7 @@ A ready-to-use PHP library for seamless communication with Rossel's Kafka infras
 composer require rossel/rossel-kafka
 ```
 
-Upgrading from 0.4? Read [UPGRADE-0.5.md](UPGRADE-0.5.md).
+Upgrading? Read [UPGRADE-0.5.md](UPGRADE-0.5.md) (from 0.4) and [UPGRADE-0.7.md](UPGRADE-0.7.md) (from 0.6).
 
 ## Configuration
 
