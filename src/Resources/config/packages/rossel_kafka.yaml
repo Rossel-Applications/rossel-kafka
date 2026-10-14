@@ -1,6 +1,8 @@
 rossel_kafka:
     producer:
         app_name: '%env(ROSSEL_KAFKA_PRODUCER_APP_NAME)%'
+        # Send an EXEC_SUCCESS/EXEC_ERROR log message after each consumed message (default: true)
+        # send_log_messages: false
 
     broker:
         url: '%env(ROSSEL_KAFKA_BROKER_URL)%'

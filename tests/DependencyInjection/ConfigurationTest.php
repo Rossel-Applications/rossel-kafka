@@ -52,6 +52,38 @@ final class ConfigurationTest extends TestCase
     }
 
     // -------------------------------------------------------------------------
+    // producer.send_log_messages
+    // -------------------------------------------------------------------------
+
+    #[Test]
+    public function shouldEnableSendLogMessagesByDefault(): void
+    {
+        $config = $this->processMinimal();
+
+        /** @var array<string, mixed> $producer */
+        $producer = $config[RootConfigKeys::PRODUCER->value];
+
+        self::assertTrue($producer[ProducerConfigKeys::SEND_LOG_MESSAGES->value]);
+    }
+
+    #[Test]
+    public function shouldDisableSendLogMessagesWhenConfiguredToFalse(): void
+    {
+        $rawConfig = [
+            RootConfigKeys::BROKER->value => [BrokerConfigKeys::URL->value => 'kafka://localhost:9092'],
+            RootConfigKeys::PRODUCER->value => [
+                ProducerConfigKeys::APP_NAME->value => 'app',
+                ProducerConfigKeys::SEND_LOG_MESSAGES->value => false,
+            ],
+        ];
+
+        /** @var array<string, array<string, mixed>> $config */
+        $config = $this->process($rawConfig);
+
+        self::assertFalse($config[RootConfigKeys::PRODUCER->value][ProducerConfigKeys::SEND_LOG_MESSAGES->value]);
+    }
+
+    // -------------------------------------------------------------------------
     // Required fields
     // -------------------------------------------------------------------------
 

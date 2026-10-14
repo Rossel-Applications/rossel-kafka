@@ -120,6 +120,29 @@ final class RosselKafkaExtensionTest extends TestCase
         self::assertSame('test-app', $this->param('producer.app_name'));
     }
 
+    #[Test]
+    public function shouldSetSendLogMessagesParameterToTrueByDefault(): void
+    {
+        $config = $this->minimal();
+
+        $this->load($config);
+
+        self::assertTrue($this->param('producer.send_log_messages'));
+    }
+
+    #[Test]
+    public function shouldSetSendLogMessagesParameterToFalseWhenDisabled(): void
+    {
+        $config = [
+            'broker' => ['url' => 'kafka://localhost:9092'],
+            'producer' => ['app_name' => 'test-app', 'send_log_messages' => false],
+        ];
+
+        $this->load($config);
+
+        self::assertFalse($this->param('producer.send_log_messages'));
+    }
+
     // -------------------------------------------------------------------------
     // authentication defaults
     // -------------------------------------------------------------------------

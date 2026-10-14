@@ -40,7 +40,7 @@ final class RosselKafkaExtension extends Extension
          *       ssl_client_key_password: string|null,
          *     },
          *   },
-         *   producer: array{app_name: string}
+         *   producer: array{app_name: string, send_log_messages: bool}
          * } $config
          */
         $config = $this->processConfiguration($configuration, $configs);
@@ -74,6 +74,7 @@ final class RosselKafkaExtension extends Extension
         $container->setParameter($bundleName.'.'.$brokerKey.'.'.$authKey.'.'.BrokerConfigKeys::SSL_CLIENT_KEY->value, $nullable($authConfig[BrokerConfigKeys::SSL_CLIENT_KEY->value]));
         $container->setParameter($bundleName.'.'.$brokerKey.'.'.$authKey.'.'.BrokerConfigKeys::SSL_CLIENT_KEY_PASSWORD->value, $nullable($authConfig[BrokerConfigKeys::SSL_CLIENT_KEY_PASSWORD->value]));
         $container->setParameter($bundleName.'.'.RootConfigKeys::PRODUCER->value.'.'.ProducerConfigKeys::APP_NAME->value, $config[RootConfigKeys::PRODUCER->value][ProducerConfigKeys::APP_NAME->value]);
+        $container->setParameter($bundleName.'.'.RootConfigKeys::PRODUCER->value.'.'.ProducerConfigKeys::SEND_LOG_MESSAGES->value, $config[RootConfigKeys::PRODUCER->value][ProducerConfigKeys::SEND_LOG_MESSAGES->value]);
 
         $container
             ->registerForAutoconfiguration(ConsumerInterface::class)
