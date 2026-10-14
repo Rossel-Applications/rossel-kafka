@@ -36,3 +36,17 @@ enqueue:
         transport: '%env(ROSSEL_KAFKA_BROKER_URL)%'
         client: ~
 ```
+
+### Removed types
+
+- `Rossel\RosselKafka\Model\MessageHeadersInterface` is removed. Type against `Rossel\RosselKafka\Model\MessageHeaders`.
+- `Rossel\RosselKafka\Model\RdKafkaMessageWrapperInterface` is removed. `getRdKafkaMessage()` is now declared on `Rossel\RosselKafka\Model\MessageInterface`.
+- `Rossel\RosselKafka\Exception\UnsupportedTopicException` is removed. The library never threw it.
+
+### `MessageFactory` no longer takes a logger
+
+`new MessageFactory($logger)` becomes `new MessageFactory()`. Nothing changes if the factory is autowired.
+
+### Consumed message bodies are kept verbatim
+
+`Message::getBody()` on a consumed message now returns the Kafka record value as it was received. Before, JSON bodies were decoded and re-encoded, so `{}` came back as `[]`, whitespace was stripped and a JSON string `"x"` came back as `x`.

@@ -4,13 +4,16 @@ declare(strict_types=1);
 
 namespace Rossel\RosselKafka\Model;
 
+use Enqueue\RdKafka\RdKafkaMessage;
 use Rossel\RosselKafka\Enum\MessageHeaders\MessageType;
 
 /**
  * Interface to be implemented by classes representing Kafka messages.
  */
-interface MessageInterface extends RdKafkaMessageWrapperInterface
+interface MessageInterface
 {
+    public function getRdKafkaMessage(): RdKafkaMessage;
+
     /**
      * Returns the type of the message.
      *

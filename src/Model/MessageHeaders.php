@@ -8,7 +8,7 @@ use Ramsey\Uuid\Uuid;
 use Rossel\RosselKafka\Enum\MessageHeaders\Area;
 use Rossel\RosselKafka\Enum\MessageHeaders\MessageType;
 
-final readonly class MessageHeaders implements MessageHeadersInterface
+final readonly class MessageHeaders
 {
     public const DEFAULT_VERSION = '1';
 

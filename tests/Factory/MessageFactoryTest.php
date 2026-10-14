@@ -8,7 +8,6 @@ use Enqueue\RdKafka\RdKafkaMessage;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\NullLogger;
 use Rossel\RosselKafka\Enum\MessageHeaders\Area;
 use Rossel\RosselKafka\Enum\MessageHeaders\MessageType;
 use Rossel\RosselKafka\Factory\MessageFactory;
@@ -20,7 +19,7 @@ final class MessageFactoryTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->factory = new MessageFactory(new NullLogger());
+        $this->factory = new MessageFactory();
     }
 
     // -------------------------------------------------------------------------
@@ -35,7 +34,6 @@ final class MessageFactoryTest extends TestCase
         $message = $this->factory->createMessageFromRdKafka($rdMessage);
 
         self::assertSame(MessageType::LOG, $message->getType());
-        // Message re-encodes body to JSON string — getBody() always returns a string
         self::assertSame('{"payload":"data"}', $message->getBody());
     }
 
@@ -81,8 +79,6 @@ final class MessageFactoryTest extends TestCase
     #[Test]
     public function jsonBodyPreservedAsJsonString(): void
     {
-        // Factory decodes JSON internally then Message re-encodes it.
-        // getBody() always returns a JSON string.
         $rdMessage = $this->buildRdKafkaMessage('{"key":"value","number":42}');
 
         $message = $this->factory->createMessageFromRdKafka($rdMessage);
@@ -98,6 +94,36 @@ final class MessageFactoryTest extends TestCase
         $message = $this->factory->createMessageFromRdKafka($rdMessage);
 
         self::assertSame('{"level1":{"level2":"deep"}}', $message->getBody());
+    }
+
+    #[Test]
+    public function emptyJsonObjectBodyIsKeptVerbatim(): void
+    {
+        $rdMessage = $this->buildRdKafkaMessage('{}');
+
+        $message = $this->factory->createMessageFromRdKafka($rdMessage);
+
+        self::assertSame('{}', $message->getBody());
+    }
+
+    #[Test]
+    public function jsonBodyWhitespaceIsKeptVerbatim(): void
+    {
+        $rdMessage = $this->buildRdKafkaMessage('{ "a": 1 }');
+
+        $message = $this->factory->createMessageFromRdKafka($rdMessage);
+
+        self::assertSame('{ "a": 1 }', $message->getBody());
+    }
+
+    #[Test]
+    public function jsonStringLiteralBodyIsKeptVerbatim(): void
+    {
+        $rdMessage = $this->buildRdKafkaMessage('"x"');
+
+        $message = $this->factory->createMessageFromRdKafka($rdMessage);
+
+        self::assertSame('"x"', $message->getBody());
     }
 
     #[Test]

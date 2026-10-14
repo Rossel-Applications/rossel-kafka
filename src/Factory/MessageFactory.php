@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Rossel\RosselKafka\Factory;
 
 use Enqueue\RdKafka\RdKafkaMessage;
-use Psr\Log\LoggerInterface;
 use Rossel\RosselKafka\Enum\MessageHeaders\Area;
 use Rossel\RosselKafka\Enum\MessageHeaders\MessageType;
 use Rossel\RosselKafka\Model\Message;
@@ -15,20 +14,14 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 
 final readonly class MessageFactory implements MessageFactoryInterface
 {
-    public function __construct(
-        private LoggerInterface $logger,
-    ) {
-    }
-
     /**
-     * @throws \JsonException
      * @throws \Exception
      */
     public function createMessageFromRdKafka(RdKafkaMessage $message): Message
     {
         return new Message(
             $this->createMessageHeadersFromRdKafka($message),
-            $this->createMessageBodyFromRdKafka($message),
+            $message->getBody(),
             $message->getKey(),
         );
     }
@@ -84,28 +77,6 @@ final readonly class MessageFactory implements MessageFactoryInterface
             version: $version,
             additionalHeaders: $additionalHeaders,
         );
-    }
-
-    /**
-     * @return array<array-key, mixed>|string
-     */
-    private function createMessageBodyFromRdKafka(RdKafkaMessage $message): array|string
-    {
-        $body = $message->getBody();
-
-        $this->logger->debug('Starting message body serialization...');
-
-        try {
-            $decoded = json_decode($body, true, 512, \JSON_THROW_ON_ERROR);
-            // assert() narrows the type for PHPStan without an inline @var that CS Fixer would strip.
-            \assert(\is_array($decoded) || \is_string($decoded));
-
-            return $decoded;
-        } catch (\Exception) {
-            $this->logger->debug('Message body cannot be serialized in json format. Returning a string body.');
-        }
-
-        return $body;
     }
 
     /**
