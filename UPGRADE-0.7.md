@@ -103,3 +103,7 @@ rossel_kafka:
 ### SASL now defaults to `PLAIN`
 
 When `sasl_mechanism` came from an env var that was not set, no mechanism was passed to librdkafka, which then used `GSSAPI`. The connector now falls back to `PLAIN`, as documented.
+
+### `broker` and `producer` are required
+
+A `rossel_kafka` config without the `broker` or `producer` section used to pass validation, then failed with an "Undefined array key" error while building the container. It now fails validation with a message naming the missing section. A config that worked before still works.

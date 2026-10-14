@@ -94,6 +94,28 @@ final class ConfigurationTest extends TestCase
     // -------------------------------------------------------------------------
 
     #[Test]
+    public function shouldThrowWhenBrokerIsMissing(): void
+    {
+        $config = [RootConfigKeys::PRODUCER->value => [ProducerConfigKeys::APP_NAME->value => 'app']];
+
+        $exception = $this->processAndCatch($config);
+
+        self::assertInstanceOf(InvalidConfigurationException::class, $exception);
+        self::assertStringContainsString('"'.RootConfigKeys::BROKER->value.'"', $exception->getMessage());
+    }
+
+    #[Test]
+    public function shouldThrowWhenProducerIsMissing(): void
+    {
+        $config = [RootConfigKeys::BROKER->value => [BrokerConfigKeys::URL->value => 'kafka://host:9092']];
+
+        $exception = $this->processAndCatch($config);
+
+        self::assertInstanceOf(InvalidConfigurationException::class, $exception);
+        self::assertStringContainsString('"'.RootConfigKeys::PRODUCER->value.'"', $exception->getMessage());
+    }
+
+    #[Test]
     public function throwsWhenBrokerUrlMissing(): void
     {
         $this->expectException(InvalidConfigurationException::class);
@@ -340,6 +362,20 @@ final class ConfigurationTest extends TestCase
     private function process(array $config): array
     {
         return $this->processor->processConfiguration($this->configuration, [$config]);
+    }
+
+    /**
+     * @param array<string, mixed> $config
+     */
+    private function processAndCatch(array $config): ?\Throwable
+    {
+        try {
+            $this->process($config);
+        } catch (\Throwable $e) {
+            return $e;
+        }
+
+        return null;
     }
 
     /**
