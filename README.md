@@ -80,7 +80,7 @@ Producing to a topic that cannot be produced to, or consuming a topic that canno
 
 Authentication is **optional** — typically required in production, but not in local development.
 
-All authentication options live under `broker.authentication` in the bundle config (already wired to env vars by the bundle's default config file).
+All authentication options live under `broker.authentication` in the bundle config. [src/Resources/config/packages/rossel_kafka.yaml](src/Resources/config/packages/rossel_kafka.yaml) wires every option to an env var: copy it to your app's `config/packages/`.
 
 ### SASL
 
@@ -165,7 +165,7 @@ $kafkaConnector->send($topic, $message);
 
 ### Consume messages
 
-Implement `ConsumerInterface` and tag your service with `rossel_kafka.consumer`:
+Implement `ConsumerInterface`. With autoconfiguration (the Symfony default), the service is tagged `rossel_kafka.consumer` for you:
 
 ```php
 use Rossel\RosselKafka\Consumer\ConsumerInterface;
@@ -204,6 +204,10 @@ php bin/console rossel:kafka:listen --topics=public_subscription_input_v1_json_d
 ```
 
 Without `--topics`, configured topics that cannot be consumed are skipped with a warning. See [Topic roles](#topic-roles).
+
+A message that fails (consumer exception, invalid headers) is logged as an error and skipped: the listener keeps running.
+
+After each message, one `EXEC_SUCCESS` or `EXEC_ERROR` log message is sent to the topic, unless `producer.send_log_messages` is `false`.
 
 ### Fetch topic metadata
 

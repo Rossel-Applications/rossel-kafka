@@ -51,7 +51,37 @@ enqueue:
 
 `Message::getBody()` on a consumed message now returns the Kafka record value as it was received. Before, JSON bodies were decoded and re-encoded, so `{}` came back as `[]`, whitespace was stripped and a JSON string `"x"` came back as `x`.
 
+### The bundle no longer ships an extension class
+
+`RosselKafkaBundle` now configures itself (Symfony `AbstractBundle`). These classes and files are removed:
+
+- `Rossel\RosselKafka\DependencyInjection\RosselKafkaExtension`
+- `Rossel\RosselKafka\DependencyInjection\Configuration`
+- `src/Resources/config/services.yaml`
+
+The `rossel_kafka` config keys, the `rossel_kafka.*` container parameters and the `rossel_kafka.consumer` tag are unchanged. Nothing changes unless your code used these classes directly. The services are now wired with PHP attributes, so the bundle no longer needs `symfony/yaml`.
+
+### `MessageType::from()` throws a `\ValueError`
+
+An unknown message type name used to throw `Symfony\Component\HttpFoundation\Exception\BadRequestException`. It now throws a `\ValueError`, like the native `from()` of a backed enum. Update any `catch (BadRequestException)` around it.
+
+### One log message per consumed message
+
+`ConsumptionOrchestrator` used to send an `EXEC_ERROR` log message for each consumer that did not support the message, even when another consumer then handled it. It now sends exactly one log message per message: `EXEC_SUCCESS` when a consumer handled it, `EXEC_ERROR` otherwise.
+
+### A failing message no longer stops the listener
+
+An exception thrown by a consumer, or by `MessageFactory` on invalid headers, used to stop `rossel:kafka:listen`. The message is now logged as an error and acknowledged, then the listener moves on to the next one. When the message could be built, an `EXEC_ERROR` log message is sent. If you relied on the crash to retry a message, handle the retry in your consumer.
+
 ## New features
+
+### Symfony 6.4 support
+
+The bundle now installs on Symfony 6.4 (`symfony/process` was restricted to `^7.4`). The composer package type is now `symfony-bundle`, so Flex registers the bundle in `config/bundles.php`.
+
+### The connection is configured on first use
+
+`KafkaConnector` used to resolve the SSL certificates (and download the CA certificate) as soon as it was built. It now does it on the first `send()` or `createConsumer()`. A wrong certificate path or URL now fails there instead of when the service is created. No action required.
 
 ### The producer is created on first send
 
@@ -67,3 +97,9 @@ rossel_kafka:
         app_name: '%env(ROSSEL_KAFKA_PRODUCER_APP_NAME)%'
         send_log_messages: false
 ```
+
+## Bug fixes
+
+### SASL now defaults to `PLAIN`
+
+When `sasl_mechanism` came from an env var that was not set, no mechanism was passed to librdkafka, which then used `GSSAPI`. The connector now falls back to `PLAIN`, as documented.

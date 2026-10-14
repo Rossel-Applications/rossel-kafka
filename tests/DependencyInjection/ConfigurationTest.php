@@ -7,23 +7,29 @@ namespace Rossel\RosselKafka\Tests\DependencyInjection;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Rossel\RosselKafka\DependencyInjection\Configuration;
 use Rossel\RosselKafka\Enum\Config\Broker\BrokerConfigKeys;
 use Rossel\RosselKafka\Enum\Config\Broker\TopicConfigKeys;
 use Rossel\RosselKafka\Enum\Config\Producer\ProducerConfigKeys;
 use Rossel\RosselKafka\Enum\Config\RootConfigKeys;
+use Rossel\RosselKafka\RosselKafkaBundle;
+use Symfony\Component\Config\Definition\ConfigurationInterface;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\Config\Definition\Processor;
+use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Extension\ConfigurationExtensionInterface;
 
 final class ConfigurationTest extends TestCase
 {
     private Processor $processor;
-    private Configuration $configuration;
+    private ConfigurationInterface $configuration;
 
     protected function setUp(): void
     {
         $this->processor = new Processor();
-        $this->configuration = new Configuration();
+        $extension = (new RosselKafkaBundle())->getContainerExtension();
+        self::assertInstanceOf(ConfigurationExtensionInterface::class, $extension);
+        $this->configuration = $extension->getConfiguration([], new ContainerBuilder())
+            ?? throw new \LogicException('The bundle has no configuration.');
     }
 
     // -------------------------------------------------------------------------

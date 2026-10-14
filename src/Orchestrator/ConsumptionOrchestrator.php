@@ -18,6 +18,8 @@ use Rossel\RosselKafka\Model\Message;
 use Rossel\RosselKafka\Model\MessageHeaders;
 use Rossel\RosselKafka\Model\Topic;
 use Rossel\RosselKafka\Service\Connector\KafkaConnectorInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\DependencyInjection\Attribute\AutowireIterator;
 
 final readonly class ConsumptionOrchestrator implements ConsumptionOrchestratorInterface
 {
@@ -28,8 +30,11 @@ final readonly class ConsumptionOrchestrator implements ConsumptionOrchestratorI
         private LoggerInterface $logger,
         private KafkaConnectorInterface $kafkaConnector,
         private MessageFactoryInterface $messageFactory,
+        #[AutowireIterator(ConsumerInterface::TAG)]
         private iterable $consumers,
+        #[Autowire(param: 'rossel_kafka.producer.app_name')]
         private string $appName,
+        #[Autowire(param: 'rossel_kafka.producer.send_log_messages')]
         private bool $sendLogMessages = true,
     ) {
     }
@@ -76,14 +81,12 @@ final readonly class ConsumptionOrchestrator implements ConsumptionOrchestratorI
                     ],
                 );
 
-                $rosselMessage = $this->messageFactory->createMessageFromRdKafka($message);
-
-                $this->processRosselMessage($rosselMessage, $topic);
+                $rosselMessage = $this->handleMessage($message, $topic);
 
                 // Marque le message comme "traité"
                 $consumer->acknowledge($message);
 
-                if (null !== $onMessageCallable) {
+                if (null !== $rosselMessage && null !== $onMessageCallable) {
                     $onMessageCallable($topic, $rosselMessage->getType());
                 }
             } else {
@@ -94,10 +97,36 @@ final readonly class ConsumptionOrchestrator implements ConsumptionOrchestratorI
         }
     }
 
+    /**
+     * A failing message is logged and skipped, so it never stops the listener.
+     * Sends one log message per message that could be built.
+     */
+    private function handleMessage(RdKafkaMessage $rdKafkaMessage, Topic $topic): ?Message
+    {
+        $message = null;
+
+        try {
+            $message = $this->messageFactory->createMessageFromRdKafka($rdKafkaMessage);
+            $consumed = $this->processRosselMessage($message, $topic);
+        } catch (\Throwable $e) {
+            $consumed = false;
+            $this->logger->error(
+                \sprintf('Failed to process message #%s from topic "%s": %s', $rdKafkaMessage->getMessageId(), $topic->getName(), $e->getMessage()),
+                ['id' => $rdKafkaMessage->getMessageId(), 'topic' => $topic->getName(), 'exception' => $e],
+            );
+        }
+
+        if (null !== $message) {
+            $this->sendLogMessage($message, $topic, $consumed);
+        }
+
+        return $message;
+    }
+
     private function processRosselMessage(
         Message $message,
         Topic $topic,
-    ): void {
+    ): bool {
         $messageId = $message->getRdKafkaMessage()->getMessageId();
 
         $this->logger->debug(
@@ -109,7 +138,7 @@ final readonly class ConsumptionOrchestrator implements ConsumptionOrchestratorI
 
         foreach ($this->consumers as $consumer) {
             if (true === $this->tryConsumer($consumer, $message, $topic)) {
-                return;
+                return true;
             }
         }
 
@@ -125,14 +154,10 @@ final readonly class ConsumptionOrchestrator implements ConsumptionOrchestratorI
                 'type' => $message->getType()->name,
             ]
         );
+
+        return false;
     }
 
-    /**
-     * @throws InvalidMessageException
-     * @throws InvalidDestinationException
-     * @throws Exception
-     * @throws \JsonException
-     */
     private function tryConsumer(
         ConsumerInterface $consumer,
         Message $message,
@@ -156,8 +181,6 @@ final readonly class ConsumptionOrchestrator implements ConsumptionOrchestratorI
                     'consumer' => $consumer::class,
                 ]
             );
-
-            $this->sendLogMessage($message, $topic, true);
 
             return true;
         }
@@ -184,8 +207,6 @@ final readonly class ConsumptionOrchestrator implements ConsumptionOrchestratorI
                 'reasons' => $reasons,
             ]
         );
-
-        $this->sendLogMessage($message, $topic, false);
 
         return false;
     }
