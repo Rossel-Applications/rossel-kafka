@@ -59,17 +59,17 @@ final class MessageTypeTest extends TestCase
 
     #[Test]
     #[DataProvider('invalidCaseProvider')]
-    public function fromThrowsForInvalidName(string $name): void
+    public function shouldThrowValueErrorForInvalidName(string $name): void
     {
-        // BadRequestException (symfony/http-foundation) extends RuntimeException.
-        // Catching \Throwable ensures the test passes regardless of whether the
-        // package is fully installed in the current environment.
+        $exception = null;
+
         try {
             MessageType::from($name);
-            $this->fail('Expected an exception for invalid MessageType name: '.$name);
-        } catch (\Throwable) {
-            $this->addToAssertionCount(1);
+        } catch (\Throwable $e) {
+            $exception = $e;
         }
+
+        self::assertInstanceOf(\ValueError::class, $exception);
     }
 
     // -------------------------------------------------------------------------

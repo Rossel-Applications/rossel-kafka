@@ -16,12 +16,16 @@ use Rossel\RosselKafka\Model\MessageInterface;
 use Rossel\RosselKafka\Model\Topic;
 use Rossel\RosselKafka\Service\Serializer\RawKafkaSerializer;
 use Rossel\RosselKafka\Service\Ssl\SslCertificateProvider;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 final class KafkaConnector implements KafkaConnectorInterface
 {
-    private readonly RdKafkaContext $rdKafkaProducerContext;
+    private ?RdKafkaContext $rdKafkaProducerContext = null;
 
-    private readonly RdKafkaContext $rdKafkaConsumerContext;
+    private ?RdKafkaContext $rdKafkaConsumerContext = null;
+
+    /** @var array<string, string>|null */
+    private ?array $commonGlobalConfig = null;
 
     private ?RdKafkaProducer $rdKafkaProducer = null;
 
@@ -32,27 +36,30 @@ final class KafkaConnector implements KafkaConnectorInterface
     private array $consumerTopics = [];
 
     public function __construct(
-        string $brokerUrl,
+        #[Autowire(param: 'rossel_kafka.broker.url')]
+        private readonly string $brokerUrl,
+        #[Autowire(param: 'rossel_kafka.producer.app_name')]
         private readonly string $appName,
+        #[Autowire(param: 'rossel_kafka.broker.authentication.sasl_username')]
         private readonly ?string $saslUsername,
+        #[Autowire(param: 'rossel_kafka.broker.authentication.sasl_password')]
         private readonly ?string $saslPassword,
+        #[Autowire(param: 'rossel_kafka.broker.authentication.sasl_mechanism')]
         private readonly ?string $saslMechanism,
-        ?string $sslCaCertificateUrl,
-        ?string $sslCaCertificatePath,
-        ?string $sslClientCertificate,
-        ?string $sslClientKey,
+        #[Autowire(param: 'rossel_kafka.broker.authentication.ssl_ca_certificate_url')]
+        private readonly ?string $sslCaCertificateUrl,
+        #[Autowire(param: 'rossel_kafka.broker.authentication.ssl_ca_certificate_path')]
+        private readonly ?string $sslCaCertificatePath,
+        #[Autowire(param: 'rossel_kafka.broker.authentication.ssl_client_certificate')]
+        private readonly ?string $sslClientCertificate,
+        #[Autowire(param: 'rossel_kafka.broker.authentication.ssl_client_key')]
+        private readonly ?string $sslClientKey,
+        #[Autowire(param: 'rossel_kafka.broker.authentication.ssl_client_key_password')]
         private readonly ?string $sslClientKeyPassword,
-        SslCertificateProvider $sslCertificateProvider,
+        private readonly SslCertificateProvider $sslCertificateProvider,
+        #[Autowire(param: 'rossel_kafka.broker.debug')]
         private readonly ?string $debugLevel = null,
     ) {
-        $resolvedCaCertPath = $sslCertificateProvider->resolve($sslCaCertificateUrl, $sslCaCertificatePath);
-        $resolvedClientCertPath = $sslCertificateProvider->resolvePem($sslClientCertificate, 'client_cert');
-        $resolvedClientKeyPath = $sslCertificateProvider->resolvePem($sslClientKey, 'client_key');
-
-        $cleanBrokerUrl = str_replace('kafka://', '', $brokerUrl);
-
-        $this->rdKafkaProducerContext = $this->buildProducerContext($cleanBrokerUrl, $resolvedCaCertPath, $resolvedClientCertPath, $resolvedClientKeyPath);
-        $this->rdKafkaConsumerContext = $this->buildConsumerContext($cleanBrokerUrl, $resolvedCaCertPath, $resolvedClientCertPath, $resolvedClientKeyPath);
     }
 
     /**
@@ -73,7 +80,7 @@ final class KafkaConnector implements KafkaConnectorInterface
         }
 
         // Created on first send, so consumer-only apps never open a producer.
-        $this->rdKafkaProducer ??= $this->rdKafkaProducerContext->createProducer();
+        $this->rdKafkaProducer ??= $this->producerContext()->createProducer();
         $this->rdKafkaProducer->send(
             $topic,
             $message->getRdKafkaMessage(),
@@ -89,24 +96,47 @@ final class KafkaConnector implements KafkaConnectorInterface
             throw UnauthorizedTopicOperationException::consume($topic);
         }
 
-        return $this->rdKafkaConsumerContext->createConsumer($this->getConsumerTopic($topic));
+        return $this->consumerContext()->createConsumer($this->getConsumerTopic($topic));
     }
 
     private function getProducerTopic(Topic $topic): RdKafkaTopic
     {
-        return $this->producerTopics[$topic->getName()] ??= $this->rdKafkaProducerContext->createTopic($topic->getName());
+        return $this->producerTopics[$topic->getName()] ??= $this->producerContext()->createTopic($topic->getName());
     }
 
     private function getConsumerTopic(Topic $topic): RdKafkaTopic
     {
-        return $this->consumerTopics[$topic->getName()] ??= $this->rdKafkaConsumerContext->createTopic($topic->getName());
+        return $this->consumerTopics[$topic->getName()] ??= $this->consumerContext()->createTopic($topic->getName());
+    }
+
+    // Built on first use, so the SSL certificates are only resolved (and downloaded) when a connection is needed.
+    private function producerContext(): RdKafkaContext
+    {
+        return $this->rdKafkaProducerContext ??= $this->buildProducerContext();
+    }
+
+    private function consumerContext(): RdKafkaContext
+    {
+        return $this->rdKafkaConsumerContext ??= $this->buildConsumerContext();
     }
 
     /**
      * @return array<string, string>
      */
-    private function buildCommonGlobalConfig(string $brokerUrl, ?string $resolvedCaCertPath, ?string $resolvedClientCertPath, ?string $resolvedClientKeyPath): array
+    private function commonGlobalConfig(): array
     {
+        return $this->commonGlobalConfig ??= $this->buildCommonGlobalConfig();
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function buildCommonGlobalConfig(): array
+    {
+        $resolvedCaCertPath = $this->sslCertificateProvider->resolve($this->sslCaCertificateUrl, $this->sslCaCertificatePath);
+        $resolvedClientCertPath = $this->sslCertificateProvider->resolvePem($this->sslClientCertificate, 'client_cert');
+        $resolvedClientKeyPath = $this->sslCertificateProvider->resolvePem($this->sslClientKey, 'client_key');
+
         $hasSsl = null !== $resolvedCaCertPath || null !== $resolvedClientCertPath;
         $hasSasl = null !== $this->saslUsername && null !== $this->saslPassword;
 
@@ -118,7 +148,7 @@ final class KafkaConnector implements KafkaConnectorInterface
         };
 
         $config = [
-            'metadata.broker.list' => $brokerUrl,
+            'metadata.broker.list' => str_replace('kafka://', '', $this->brokerUrl),
             'security.protocol' => $securityProtocol,
         ];
 
@@ -139,9 +169,8 @@ final class KafkaConnector implements KafkaConnectorInterface
         }
 
         if ($hasSasl) {
-            if (null !== $this->saslMechanism) {
-                $config['sasl.mechanism'] = $this->saslMechanism;
-            }
+            // librdkafka would default to GSSAPI, e.g. when the mechanism env var is not set.
+            $config['sasl.mechanism'] = $this->saslMechanism ?? 'PLAIN';
             /** @var string $saslUsername */
             $saslUsername = $this->saslUsername;
             /** @var string $saslPassword */
@@ -157,11 +186,11 @@ final class KafkaConnector implements KafkaConnectorInterface
         return $config;
     }
 
-    private function buildProducerContext(string $brokerUrl, ?string $resolvedCaCertPath, ?string $resolvedClientCertPath, ?string $resolvedClientKeyPath): RdKafkaContext
+    private function buildProducerContext(): RdKafkaContext
     {
         /** @var array<string, string> $globalConfig */
         $globalConfig = array_merge(
-            $this->buildCommonGlobalConfig($brokerUrl, $resolvedCaCertPath, $resolvedClientCertPath, $resolvedClientKeyPath),
+            $this->commonGlobalConfig(),
             [
                 'enable.idempotence' => 'true',
                 'retries' => '2147483647',
@@ -186,11 +215,11 @@ final class KafkaConnector implements KafkaConnectorInterface
         return $context;
     }
 
-    private function buildConsumerContext(string $brokerUrl, ?string $resolvedCaCertPath, ?string $resolvedClientCertPath, ?string $resolvedClientKeyPath): RdKafkaContext
+    private function buildConsumerContext(): RdKafkaContext
     {
         /** @var array<string, string> $globalConfig */
         $globalConfig = array_merge(
-            $this->buildCommonGlobalConfig($brokerUrl, $resolvedCaCertPath, $resolvedClientCertPath, $resolvedClientKeyPath),
+            $this->commonGlobalConfig(),
             [
                 'group.id' => $this->appName,
                 'enable.auto.commit' => 'true',

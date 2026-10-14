@@ -7,19 +7,21 @@ namespace Rossel\RosselKafka\Tests\DependencyInjection;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Rossel\RosselKafka\DependencyInjection\RosselKafkaExtension;
 use Rossel\RosselKafka\RosselKafkaBundle;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Extension\ExtensionInterface;
 
 final class RosselKafkaExtensionTest extends TestCase
 {
-    private RosselKafkaExtension $extension;
+    private ExtensionInterface $extension;
     private ContainerBuilder $container;
 
     protected function setUp(): void
     {
-        $this->extension = new RosselKafkaExtension();
+        $this->extension = (new RosselKafkaBundle())->getContainerExtension() ?? throw new \LogicException('The bundle has no extension.');
         $this->container = new ContainerBuilder();
+        $this->container->setParameter('kernel.environment', 'test');
+        $this->container->setParameter('kernel.build_dir', sys_get_temp_dir());
     }
 
     /**
@@ -27,15 +29,7 @@ final class RosselKafkaExtensionTest extends TestCase
      */
     private function load(array $config): void
     {
-        try {
-            $this->extension->load([$config], $this->container);
-        } catch (\Symfony\Component\DependencyInjection\Exception\RuntimeException $e) {
-            // symfony/yaml is not installed in this environment; parameters are already
-            // registered before the YamlFileLoader call, so this is safe to ignore.
-            if (!str_contains($e->getMessage(), 'Symfony Yaml Component')) {
-                throw $e;
-            }
-        }
+        $this->extension->load([$config], $this->container);
     }
 
     /**

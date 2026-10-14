@@ -6,9 +6,13 @@ namespace Rossel\RosselKafka\Consumer;
 
 use Rossel\RosselKafka\Model\Message;
 use Rossel\RosselKafka\Model\Topic;
+use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 
+#[AutoconfigureTag(self::TAG)]
 interface ConsumerInterface
 {
+    public const TAG = 'rossel_kafka.consumer';
+
     /**
      * Checks whether the given topic is supported by the consumer.
      *

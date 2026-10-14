@@ -374,6 +374,74 @@ final class ConsumptionOrchestratorTest extends TestCase
         self::assertSame(0, $sendCount);
     }
 
+    #[Test]
+    public function shouldSendOnlySuccessLogMessageWhenSecondConsumerMatches(): void
+    {
+        $this->configureReceiveToBreakAfterOneMessage(new RdKafkaMessage(body: 'body'));
+        $this->factory->method('createMessageFromRdKafka')->willReturn($this->message);
+        $sentBodies = $this->spySentBodies();
+        $orchestrator = $this->buildOrchestrator([$this->consumer(matches: false), $this->consumer(matches: true)]);
+
+        $this->listenUntilLoopBreaks($orchestrator);
+
+        self::assertSame(['EXEC_SUCCESS'], $sentBodies->getArrayCopy());
+    }
+
+    #[Test]
+    public function shouldSendOneErrorLogMessageWhenNoConsumerMatches(): void
+    {
+        $this->configureReceiveToBreakAfterOneMessage(new RdKafkaMessage(body: 'body'));
+        $this->factory->method('createMessageFromRdKafka')->willReturn($this->message);
+        $sentBodies = $this->spySentBodies();
+        $orchestrator = $this->buildOrchestrator([$this->consumer(matches: false), $this->consumer(matches: false)]);
+
+        $this->listenUntilLoopBreaks($orchestrator);
+
+        self::assertSame(['EXEC_ERROR'], $sentBodies->getArrayCopy());
+    }
+
+    // -------------------------------------------------------------------------
+    // Failing messages
+    // -------------------------------------------------------------------------
+
+    #[Test]
+    public function shouldKeepListeningWhenConsumerThrows(): void
+    {
+        $rdKafkaMessage = new RdKafkaMessage(body: 'body');
+        $this->configureReceiveToBreakAfterOneMessage($rdKafkaMessage);
+        $this->factory->method('createMessageFromRdKafka')->willReturn($this->message);
+        $consumer = $this->consumer(matches: true);
+        $consumer->method('__invoke')->willThrowException(new \LogicException('Consumer failure'));
+        $sentBodies = $this->spySentBodies();
+        $errors = $this->spyLoggedErrors();
+        $acknowledged = $this->spyAcknowledgedMessages();
+
+        $exception = $this->listenUntilLoopBreaks($this->buildOrchestrator([$consumer]));
+
+        self::assertSame('Break infinite loop', $exception?->getMessage());
+        self::assertSame(['EXEC_ERROR'], $sentBodies->getArrayCopy());
+        self::assertCount(1, $errors);
+        self::assertSame([$rdKafkaMessage], $acknowledged->getArrayCopy());
+    }
+
+    #[Test]
+    public function shouldKeepListeningWhenMessageHeadersAreInvalid(): void
+    {
+        $rdKafkaMessage = new RdKafkaMessage(body: 'body');
+        $this->configureReceiveToBreakAfterOneMessage($rdKafkaMessage);
+        $this->factory->method('createMessageFromRdKafka')->willThrowException(new \InvalidArgumentException('Invalid headers'));
+        $sentBodies = $this->spySentBodies();
+        $errors = $this->spyLoggedErrors();
+        $acknowledged = $this->spyAcknowledgedMessages();
+
+        $exception = $this->listenUntilLoopBreaks($this->buildOrchestrator([$this->consumer(matches: true)]));
+
+        self::assertSame('Break infinite loop', $exception?->getMessage());
+        self::assertSame([], $sentBodies->getArrayCopy());
+        self::assertCount(1, $errors);
+        self::assertSame([$rdKafkaMessage], $acknowledged->getArrayCopy());
+    }
+
     // -------------------------------------------------------------------------
     // Helpers
     // -------------------------------------------------------------------------
@@ -428,5 +496,70 @@ final class ConsumptionOrchestratorTest extends TestCase
 
                 throw new \RuntimeException('Break infinite loop');
             });
+    }
+
+    /**
+     * @return MockObject&ConsumerInterface
+     */
+    private function consumer(bool $matches): MockObject
+    {
+        $consumer = $this->createMock(ConsumerInterface::class);
+        $consumer->method('supportsMessageType')->willReturn($matches);
+        $consumer->method('supportsTopic')->willReturn($matches);
+
+        return $consumer;
+    }
+
+    /**
+     * @return \ArrayObject<int, string>
+     */
+    private function spySentBodies(): \ArrayObject
+    {
+        /** @var \ArrayObject<int, string> $bodies */
+        $bodies = new \ArrayObject();
+        $this->connector->method('send')->willReturnCallback(function (Topic $topic, Message $message) use ($bodies): void {
+            $bodies[] = $message->getBody();
+        });
+
+        return $bodies;
+    }
+
+    /**
+     * @return \ArrayObject<int, string>
+     */
+    private function spyLoggedErrors(): \ArrayObject
+    {
+        /** @var \ArrayObject<int, string> $errors */
+        $errors = new \ArrayObject();
+        $this->logger->method('error')->willReturnCallback(function (string $message) use ($errors): void {
+            $errors[] = $message;
+        });
+
+        return $errors;
+    }
+
+    /**
+     * @return \ArrayObject<int, RdKafkaMessage>
+     */
+    private function spyAcknowledgedMessages(): \ArrayObject
+    {
+        /** @var \ArrayObject<int, RdKafkaMessage> $acknowledged */
+        $acknowledged = new \ArrayObject();
+        $this->rdKafkaConsumer->method('acknowledge')->willReturnCallback(function (RdKafkaMessage $message) use ($acknowledged): void {
+            $acknowledged[] = $message;
+        });
+
+        return $acknowledged;
+    }
+
+    private function listenUntilLoopBreaks(ConsumptionOrchestrator $orchestrator): ?\Throwable
+    {
+        try {
+            $orchestrator->listen($this->topic);
+        } catch (\Throwable $e) {
+            return $e;
+        }
+
+        return null;
     }
 }

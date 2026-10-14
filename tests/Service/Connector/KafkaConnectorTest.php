@@ -48,16 +48,65 @@ final class KafkaConnectorTest extends TestCase
         self::assertNull($this->producerOf($connector));
     }
 
-    private function buildConnector(): KafkaConnector
+    #[Test]
+    public function shouldNotResolveSslCertificateOnConstruction(): void
     {
+        $connector = null;
+        $exception = null;
+
+        try {
+            $connector = $this->buildConnector(sslCaCertificatePath: '/nonexistent/ca.pem');
+        } catch (\RuntimeException $e) {
+            $exception = $e;
+        }
+
+        self::assertNull($exception);
+        self::assertInstanceOf(KafkaConnector::class, $connector);
+    }
+
+    #[Test]
+    public function shouldResolveSslCertificateOnFirstConsumerCreation(): void
+    {
+        $connector = $this->buildConnector(sslCaCertificatePath: '/nonexistent/ca.pem');
+        $topic = new Topic(
+            configKey: TopicConfigKeys::KAFKA_TOPIC_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE,
+            name: 'log.output',
+        );
+        $exception = null;
+
+        try {
+            $connector->createConsumer($topic);
+        } catch (\RuntimeException $e) {
+            $exception = $e;
+        }
+
+        self::assertInstanceOf(\RuntimeException::class, $exception);
+        self::assertStringContainsString('/nonexistent/ca.pem', $exception->getMessage());
+    }
+
+    #[Test]
+    public function shouldUsePlainSaslMechanismWhenMechanismIsNull(): void
+    {
+        $connector = $this->buildConnector(saslUsername: 'user', saslPassword: 'secret');
+
+        $globalConfig = $this->consumerGlobalConfigOf($connector);
+
+        self::assertSame('PLAIN', $globalConfig['sasl.mechanism']);
+    }
+
+    private function buildConnector(
+        ?string $sslCaCertificatePath = null,
+        ?string $saslUsername = null,
+        ?string $saslPassword = null,
+    ): KafkaConnector {
         return new KafkaConnector(
             brokerUrl: 'kafka://localhost:9092',
             appName: 'test-app',
-            saslUsername: null,
-            saslPassword: null,
+            saslUsername: $saslUsername,
+            saslPassword: $saslPassword,
             saslMechanism: null,
             sslCaCertificateUrl: null,
-            sslCaCertificatePath: null,
+            sslCaCertificatePath: $sslCaCertificatePath,
             sslClientCertificate: null,
             sslClientKey: null,
             sslClientKeyPassword: null,
@@ -75,6 +124,19 @@ final class KafkaConnectorTest extends TestCase
             ),
             'body',
         );
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function consumerGlobalConfigOf(KafkaConnector $connector): array
+    {
+        $context = (new \ReflectionMethod($connector, 'consumerContext'))->invoke($connector);
+        self::assertIsObject($context);
+        /** @var array{global: array<string, string>} $config */
+        $config = (new \ReflectionProperty($context, 'config'))->getValue($context);
+
+        return $config['global'];
     }
 
     private function producerOf(KafkaConnector $connector): mixed
