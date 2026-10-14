@@ -11,6 +11,7 @@ use Rossel\RosselKafka\Enum\MessageHeaders\Area;
 use Rossel\RosselKafka\Enum\MessageHeaders\MessageType;
 use Rossel\RosselKafka\Model\Message;
 use Rossel\RosselKafka\Model\MessageHeaders;
+use Rossel\RosselKafka\Model\MessageInterface;
 
 final class MessageTest extends TestCase
 {
@@ -139,6 +140,20 @@ final class MessageTest extends TestCase
 
         self::assertSame('subscription-42', $message->getKey());
         self::assertSame('subscription-42', $message->getRdKafkaMessage()->getKey());
+    }
+
+    // -------------------------------------------------------------------------
+    // MessageInterface
+    // -------------------------------------------------------------------------
+
+    #[Test]
+    public function messageInterfaceDeclaresGetRdKafkaMessageItself(): void
+    {
+        $interface = new \ReflectionClass(MessageInterface::class);
+
+        $declaringClass = $interface->getMethod('getRdKafkaMessage')->getDeclaringClass()->getName();
+
+        self::assertSame(MessageInterface::class, $declaringClass);
     }
 
     // -------------------------------------------------------------------------

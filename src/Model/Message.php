@@ -19,14 +19,14 @@ readonly class Message implements MessageInterface
     /**
      * Initializes the message with the provided headers and body.
      *
-     * @param MessageHeadersInterface        $headers the message headers
+     * @param MessageHeaders                 $headers the message headers
      * @param array<array-key, mixed>|string $body    the message body
      * @param string|null                    $key     the Kafka record key, used for partitioning and compaction
      *
      * @throws \JsonException
      */
     public function __construct(
-        private MessageHeadersInterface $headers,
+        private MessageHeaders $headers,
         array|string $body,
         private ?string $key = null,
     ) {

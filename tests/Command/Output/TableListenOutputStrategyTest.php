@@ -317,11 +317,14 @@ final class TableListenOutputStrategyTest extends TestCase
 
         // Build a 75-char message with a space at position 40
         $msg = str_repeat('a', 40).' '.str_repeat('b', 34);
+
         $this->strategy->printRow('12:00:00', 'topic', $msg);
 
-        $allOutput = implode("\n", $writes);
-        // The first part before the space should appear
-        self::assertStringContainsString(str_repeat('a', 40), $allOutput);
+        // writes: [border, first data line, second data line]
+        self::assertCount(3, $writes);
+        self::assertStringContainsString(str_repeat('a', 40).' ', $writes[1]);
+        self::assertStringNotContainsString('bbb', $writes[1]);
+        self::assertStringContainsString(str_repeat('b', 34), $writes[2]);
     }
 
     /**
