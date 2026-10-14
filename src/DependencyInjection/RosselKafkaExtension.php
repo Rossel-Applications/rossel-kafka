@@ -13,10 +13,9 @@ use Rossel\RosselKafka\RosselKafkaBundle;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\Extension;
-use Symfony\Component\DependencyInjection\Extension\PrependExtensionInterface;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 
-final class RosselKafkaExtension extends Extension implements PrependExtensionInterface
+final class RosselKafkaExtension extends Extension
 {
     /**
      * @throws \Exception
@@ -82,43 +81,5 @@ final class RosselKafkaExtension extends Extension implements PrependExtensionIn
 
         $loader = new YamlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
         $loader->load('services.yaml');
-    }
-
-    public function prepend(ContainerBuilder $container): void
-    {
-        $this->preConfigureEnqueue($container);
-    }
-
-    /**
-     * Set a default configuration for enqueue bundle.
-     * The enqueue configuration can be overridden by creating an enqueue configuration file.
-     */
-    private function preConfigureEnqueue(ContainerBuilder $container): void
-    {
-        if (!$container->hasExtension('enqueue')) {
-            return;
-        }
-
-        $brokerUrl = null;
-
-        /** @var array<array-key, mixed> $rosselKafkaConfig */
-        $rosselKafkaConfig = $container->getExtensionConfig(RosselKafkaBundle::BUNDLE_NAME);
-
-        foreach ($rosselKafkaConfig as $configParametersGroup) {
-            if (\is_array($configParametersGroup)
-                && \array_key_exists(RootConfigKeys::BROKER->value, $configParametersGroup)
-                && \is_array($configParametersGroup[RootConfigKeys::BROKER->value])
-                && \array_key_exists(BrokerConfigKeys::URL->value, $configParametersGroup[RootConfigKeys::BROKER->value])
-            ) {
-                $brokerUrl = $configParametersGroup[RootConfigKeys::BROKER->value][BrokerConfigKeys::URL->value];
-            }
-        }
-
-        $container->prependExtensionConfig('enqueue', [
-            'default' => [
-                'transport' => $brokerUrl,
-                'client' => null,
-            ],
-        ]);
     }
 }
