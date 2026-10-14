@@ -23,7 +23,7 @@ final class KafkaConnector implements KafkaConnectorInterface
 
     private readonly RdKafkaContext $rdKafkaConsumerContext;
 
-    private readonly RdKafkaProducer $rdKafkaProducer;
+    private ?RdKafkaProducer $rdKafkaProducer = null;
 
     /** @var array<string, RdKafkaTopic> */
     private array $producerTopics = [];
@@ -53,7 +53,6 @@ final class KafkaConnector implements KafkaConnectorInterface
 
         $this->rdKafkaProducerContext = $this->buildProducerContext($cleanBrokerUrl, $resolvedCaCertPath, $resolvedClientCertPath, $resolvedClientKeyPath);
         $this->rdKafkaConsumerContext = $this->buildConsumerContext($cleanBrokerUrl, $resolvedCaCertPath, $resolvedClientCertPath, $resolvedClientKeyPath);
-        $this->rdKafkaProducer = $this->rdKafkaProducerContext->createProducer();
     }
 
     /**
@@ -73,6 +72,8 @@ final class KafkaConnector implements KafkaConnectorInterface
             $topic = $this->getProducerTopic($topic);
         }
 
+        // Created on first send, so consumer-only apps never open a producer.
+        $this->rdKafkaProducer ??= $this->rdKafkaProducerContext->createProducer();
         $this->rdKafkaProducer->send(
             $topic,
             $message->getRdKafkaMessage(),

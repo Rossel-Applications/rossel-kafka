@@ -351,6 +351,29 @@ final class ConsumptionOrchestratorTest extends TestCase
         }
     }
 
+    #[Test]
+    public function shouldNotSendLogMessageWhenDisabled(): void
+    {
+        $this->configureReceiveToBreakAfterOneMessage(new RdKafkaMessage(body: 'body'));
+        $this->factory->method('createMessageFromRdKafka')->willReturn($this->message);
+        /** @var MockObject&ConsumerInterface $consumer */
+        $consumer = $this->createMock(ConsumerInterface::class);
+        $consumer->method('supportsMessageType')->willReturn(true);
+        $consumer->method('supportsTopic')->willReturn(true);
+        $sendCount = 0;
+        $this->connector->method('send')->willReturnCallback(function () use (&$sendCount): void {
+            ++$sendCount;
+        });
+        $orchestrator = $this->buildOrchestrator([$consumer], sendLogMessages: false);
+
+        try {
+            $orchestrator->listen($this->topic);
+        } catch (\RuntimeException) {
+        }
+
+        self::assertSame(0, $sendCount);
+    }
+
     // -------------------------------------------------------------------------
     // Helpers
     // -------------------------------------------------------------------------
@@ -358,7 +381,7 @@ final class ConsumptionOrchestratorTest extends TestCase
     /**
      * @param list<ConsumerInterface> $consumers
      */
-    private function buildOrchestrator(array $consumers = []): ConsumptionOrchestrator
+    private function buildOrchestrator(array $consumers = [], bool $sendLogMessages = true): ConsumptionOrchestrator
     {
         return new ConsumptionOrchestrator(
             logger: $this->logger,
@@ -366,6 +389,7 @@ final class ConsumptionOrchestratorTest extends TestCase
             messageFactory: $this->factory,
             consumers: $consumers,
             appName: 'test-app',
+            sendLogMessages: $sendLogMessages,
         );
     }
 
