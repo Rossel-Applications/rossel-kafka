@@ -4,19 +4,13 @@ services:
     autoconfigure: true
     public: false
 
-  _instanceof:
-    Rossel\RosselKafka\Consumer\ConsumerInterface:
-      tags: ['rossel_kafka.consumer']
-
   Rossel\RosselKafka\:
     resource: '../../../src/'
     exclude:
       - '../../../src/DependencyInjection/'
-      - '../../../src/Entity/'
       - '../../../src/Model/'
       - '../../../src/Enum/'
       - '../../../src/Exception/'
-      - '../../../src/RosselKafkaPhpKitBundle.php'
 
   Rossel\RosselKafka\Service\Connector\KafkaConnector:
     arguments:
