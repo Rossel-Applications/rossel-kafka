@@ -31,6 +31,7 @@ final class RosselKafkaBundle extends AbstractBundle
         $rootNode
             ->children()
             ->arrayNode(RootConfigKeys::BROKER->value)
+                ->isRequired()
                 ->children()
                 ->scalarNode(BrokerConfigKeys::URL->value)
                     ->isRequired()
@@ -82,6 +83,7 @@ final class RosselKafkaBundle extends AbstractBundle
                 ->end()
             ->end()
             ->arrayNode(RootConfigKeys::PRODUCER->value)
+                ->isRequired()
                 ->children()
                 ->scalarNode(ProducerConfigKeys::APP_NAME->value)
                     ->isRequired()
