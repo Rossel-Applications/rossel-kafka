@@ -222,8 +222,8 @@ final class KafkaConnector implements KafkaConnectorInterface
             $this->commonGlobalConfig(),
             [
                 'group.id' => $this->appName,
-                'enable.auto.commit' => 'true',
-                'auto.commit.interval.ms' => '5000',
+                // Offsets are committed by acknowledge(), once the message is processed.
+                'enable.auto.commit' => 'false',
                 'fetch.min.bytes' => '1000',
             ]
         );
