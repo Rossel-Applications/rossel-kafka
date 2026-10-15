@@ -209,6 +209,8 @@ A message that fails (consumer exception, invalid headers) is logged as an error
 
 After each message, one `EXEC_SUCCESS` or `EXEC_ERROR` log message is sent to the topic, unless `producer.send_log_messages` is `false`.
 
+Offsets are committed once a message is processed (at-least-once delivery). If the listener stops while processing a message, that message is read again on restart, so consumers must be idempotent.
+
 ### Fetch topic metadata
 
 ```php

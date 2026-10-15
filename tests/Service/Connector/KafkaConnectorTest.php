@@ -94,6 +94,17 @@ final class KafkaConnectorTest extends TestCase
         self::assertSame('PLAIN', $globalConfig['sasl.mechanism']);
     }
 
+    #[Test]
+    public function shouldCommitOffsetsOnlyOnAcknowledge(): void
+    {
+        $connector = $this->buildConnector();
+
+        $globalConfig = $this->consumerGlobalConfigOf($connector);
+
+        self::assertSame('false', $globalConfig['enable.auto.commit']);
+        self::assertArrayNotHasKey('auto.commit.interval.ms', $globalConfig);
+    }
+
     private function buildConnector(
         ?string $sslCaCertificatePath = null,
         ?string $saslUsername = null,
