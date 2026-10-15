@@ -107,3 +107,7 @@ When `sasl_mechanism` came from an env var that was not set, no mechanism was pa
 ### `broker` and `producer` are required
 
 A `rossel_kafka` config without the `broker` or `producer` section used to pass validation, then failed with an "Undefined array key" error while building the container. It now fails validation with a message naming the missing section. A config that worked before still works.
+
+### Offsets are committed after processing
+
+The consumer committed offsets automatically every 5 seconds, on top of the commit made when each message is acknowledged. A message could then be committed before it was processed, and lost if the listener stopped. Auto-commit is now disabled: an offset is committed only once its message is processed and acknowledged. If the listener stops while processing a message, that message is read again on restart, so make your consumers idempotent.
