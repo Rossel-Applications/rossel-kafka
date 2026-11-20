@@ -71,6 +71,17 @@ final class MessageFactoryTest extends TestCase
         self::assertNull($message->getKey());
     }
 
+    #[Test]
+    public function shouldBuildMessageWithEmptyBodyFromRecordWithoutValue(): void
+    {
+        $rdMessage = $this->buildRdKafkaMessage('');
+        $rdMessage->payload = null;
+
+        $message = $this->factory->createMessageFromRdKafka($rdMessage);
+
+        self::assertSame('', $message->getBody());
+    }
+
     // -------------------------------------------------------------------------
     // Body deserialization
     // -------------------------------------------------------------------------
