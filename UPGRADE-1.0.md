@@ -61,6 +61,10 @@ try {
 
 ## New features
 
+### Symfony 8 support
+
+The bundle now installs on Symfony 8 (which requires PHP 8.4 or later). No action required.
+
 ### Consumed messages are logged with their position
 
 The `id` in the consumer logs used to be empty. It is now `partition:offset`, for example `0:42`.
