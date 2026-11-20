@@ -198,7 +198,7 @@ final class TableListenOutputStrategyTest extends TestCase
 
         self::assertNotEmpty($matchA, 'topic-a should have a color tag');
         self::assertNotEmpty($matchB, 'topic-b should have a color tag');
-        self::assertNotSame($matchA[1], $matchB[1], 'Different topics get different colors');
+        self::assertNotSame($matchA[1] ?? null, $matchB[1] ?? null, 'Different topics get different colors');
     }
 
     #[Test]

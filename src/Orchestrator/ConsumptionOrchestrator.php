@@ -191,7 +191,7 @@ final readonly class ConsumptionOrchestrator implements ConsumptionOrchestratorI
             $reasons['supportsMessageType'] = false;
         }
 
-        if (isset($supportsTopic) && false === $supportsTopic) {
+        if (isset($supportsTopic)) {
             $reasons['supportsTopic'] = false;
         }
 

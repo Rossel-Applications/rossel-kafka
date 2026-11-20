@@ -79,6 +79,10 @@ An exception thrown by a consumer, or by `MessageFactory` on invalid headers, us
 
 The bundle now installs on Symfony 6.4 (`symfony/process` was restricted to `^7.4`). The composer package type is now `symfony-bundle`, so Flex registers the bundle in `config/bundles.php`.
 
+### Symfony 8 support
+
+The bundle now installs on Symfony 8 (which requires PHP 8.4 or later). No action required.
+
 ### The connection is configured on first use
 
 `KafkaConnector` used to resolve the SSL certificates (and download the CA certificate) as soon as it was built. It now does it on the first `send()` or `createConsumer()`. A wrong certificate path or URL now fails there instead of when the service is created. No action required.
