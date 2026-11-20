@@ -88,7 +88,7 @@ final readonly class ConsumptionOrchestrator implements ConsumptionOrchestratorI
             }
 
             if (\RD_KAFKA_RESP_ERR_NO_ERROR !== $message->err) {
-                throw new \RuntimeException($message->errstr(), $message->err);
+                throw new \RuntimeException($message->errstr() ?? \sprintf('Kafka error %d', $message->err), $message->err);
             }
 
             $messageId = \sprintf('%d:%d', $message->partition, $message->offset);
@@ -197,7 +197,7 @@ final readonly class ConsumptionOrchestrator implements ConsumptionOrchestratorI
             $reasons['supportsMessageType'] = false;
         }
 
-        if (isset($supportsTopic) && false === $supportsTopic) {
+        if (isset($supportsTopic)) {
             $reasons['supportsTopic'] = false;
         }
 

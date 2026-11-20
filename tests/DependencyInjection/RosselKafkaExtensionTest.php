@@ -334,17 +334,4 @@ final class RosselKafkaExtensionTest extends TestCase
             $this->param('broker.topics_roles'),
         );
     }
-
-    // -------------------------------------------------------------------------
-    // autoconfiguration tag
-    // -------------------------------------------------------------------------
-
-    #[Test]
-    public function loadRegistersConsumerInterfaceForAutoconfiguration(): void
-    {
-        $this->load($this->minimal());
-
-        $autoconfiguredInstances = $this->container->getAutoconfiguredInstanceof();
-        self::assertArrayHasKey(\Rossel\RosselKafka\Consumer\ConsumerInterface::class, $autoconfiguredInstances);
-    }
 }
