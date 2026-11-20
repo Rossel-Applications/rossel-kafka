@@ -21,7 +21,7 @@ final readonly class MessageFactory implements MessageFactoryInterface
     {
         return new Message(
             $this->createMessageHeadersFromRdKafka($message),
-            $message->payload,
+            $message->payload ?? '',
             $message->key,
         );
     }
