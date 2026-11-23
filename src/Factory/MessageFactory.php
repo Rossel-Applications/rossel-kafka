@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Rossel\RosselKafka\Factory;
 
-use Enqueue\RdKafka\RdKafkaMessage;
+use RdKafka\Message as RdKafkaMessage;
 use Rossel\RosselKafka\Enum\MessageHeaders\Area;
 use Rossel\RosselKafka\Enum\MessageHeaders\MessageType;
 use Rossel\RosselKafka\Model\Message;
@@ -21,8 +21,8 @@ final readonly class MessageFactory implements MessageFactoryInterface
     {
         return new Message(
             $this->createMessageHeadersFromRdKafka($message),
-            $message->getBody(),
-            $message->getKey(),
+            $message->payload,
+            $message->key,
         );
     }
 
@@ -31,7 +31,7 @@ final readonly class MessageFactory implements MessageFactoryInterface
      */
     private function createMessageHeadersFromRdKafka(RdKafkaMessage $message): MessageHeaders
     {
-        $headers = $message->getHeaders();
+        $headers = $message->headers;
 
         $this->validateMessageHeaders($headers);
 

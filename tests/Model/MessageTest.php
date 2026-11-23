@@ -82,19 +82,11 @@ final class MessageTest extends TestCase
     }
 
     // -------------------------------------------------------------------------
-    // getRdKafkaMessage
+    // getHeaders
     // -------------------------------------------------------------------------
 
     #[Test]
-    public function rdKafkaMessageHasCorrectBody(): void
-    {
-        $message = new Message($this->buildHeaders(), 'test-body');
-
-        self::assertSame('test-body', $message->getRdKafkaMessage()->getBody());
-    }
-
-    #[Test]
-    public function rdKafkaMessageHasHeadersFromMessageHeaders(): void
+    public function shouldExposeHeadersAsKafkaHeaders(): void
     {
         $headers = new MessageHeaders(
             area: Area::BELGIUM,
@@ -104,20 +96,9 @@ final class MessageTest extends TestCase
         );
         $message = new Message($headers, '{}');
 
-        $rdHeaders = $message->getRdKafkaMessage()->getHeaders();
+        $kafkaHeaders = $message->getHeaders();
 
-        self::assertSame('BE', $rdHeaders[MessageHeaders::KEY_AREA]);
-        self::assertSame('svc', $rdHeaders[MessageHeaders::KEY_FROM]);
-        self::assertSame('EXEC_SUCCESS', $rdHeaders[MessageHeaders::KEY_MESSAGE_TYPE]);
-        self::assertSame('tid-abc', $rdHeaders[MessageHeaders::KEY_TRACK_ID]);
-    }
-
-    #[Test]
-    public function rdKafkaMessageBodyMatchesGetBody(): void
-    {
-        $message = new Message($this->buildHeaders(), ['foo' => 'bar']);
-
-        self::assertSame($message->getBody(), $message->getRdKafkaMessage()->getBody());
+        self::assertSame($headers->toArray(), $kafkaHeaders);
     }
 
     // -------------------------------------------------------------------------
@@ -130,28 +111,36 @@ final class MessageTest extends TestCase
         $message = new Message($this->buildHeaders(), 'body');
 
         self::assertNull($message->getKey());
-        self::assertNull($message->getRdKafkaMessage()->getKey());
     }
 
     #[Test]
-    public function keyIsExposedAndSetOnRdKafkaMessage(): void
+    public function shouldExposeKey(): void
     {
         $message = new Message($this->buildHeaders(), 'body', 'subscription-42');
 
         self::assertSame('subscription-42', $message->getKey());
-        self::assertSame('subscription-42', $message->getRdKafkaMessage()->getKey());
     }
 
     // -------------------------------------------------------------------------
     // MessageInterface
     // -------------------------------------------------------------------------
 
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function interfaceMethodProvider(): iterable
+    {
+        yield 'getBody' => ['getBody'];
+        yield 'getHeaders' => ['getHeaders'];
+    }
+
     #[Test]
-    public function messageInterfaceDeclaresGetRdKafkaMessageItself(): void
+    #[DataProvider('interfaceMethodProvider')]
+    public function shouldDeclareWhatTheConnectorSendsOnMessageInterface(string $method): void
     {
         $interface = new \ReflectionClass(MessageInterface::class);
 
-        $declaringClass = $interface->getMethod('getRdKafkaMessage')->getDeclaringClass()->getName();
+        $declaringClass = $interface->getMethod($method)->getDeclaringClass()->getName();
 
         self::assertSame(MessageInterface::class, $declaringClass);
     }

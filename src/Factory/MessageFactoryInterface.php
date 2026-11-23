@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Rossel\RosselKafka\Factory;
 
-use Enqueue\RdKafka\RdKafkaMessage;
+use RdKafka\Message as RdKafkaMessage;
 use Rossel\RosselKafka\Model\Message;
 
 interface MessageFactoryInterface

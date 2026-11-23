@@ -4,11 +4,8 @@ declare(strict_types=1);
 
 namespace Rossel\RosselKafka\Orchestrator;
 
-use Enqueue\RdKafka\RdKafkaMessage;
-use Interop\Queue\Exception;
-use Interop\Queue\Exception\InvalidDestinationException;
-use Interop\Queue\Exception\InvalidMessageException;
 use Psr\Log\LoggerInterface;
+use RdKafka\Message as RdKafkaMessage;
 use Rossel\RosselKafka\Consumer\ConsumerInterface;
 use Rossel\RosselKafka\Enum\MessageHeaders\Area;
 use Rossel\RosselKafka\Enum\MessageHeaders\MessageType;
@@ -23,6 +20,15 @@ use Symfony\Component\DependencyInjection\Attribute\AutowireIterator;
 
 final readonly class ConsumptionOrchestrator implements ConsumptionOrchestratorInterface
 {
+    private const CONSUME_TIMEOUT_MS = 500;
+
+    // librdkafka reports these when there is simply no message to read yet.
+    private const NO_MESSAGE_ERRORS = [
+        \RD_KAFKA_RESP_ERR__PARTITION_EOF,
+        \RD_KAFKA_RESP_ERR__TIMED_OUT,
+        \RD_KAFKA_RESP_ERR__TRANSPORT,
+    ];
+
     /**
      * @param iterable<ConsumerInterface> $consumers
      */
@@ -60,6 +66,7 @@ final readonly class ConsumptionOrchestrator implements ConsumptionOrchestratorI
                     $this->logger->debug(\sprintf('Creating consumer for topic %s...', $topic->getName()));
                     $consumer = $this->kafkaConnector->createConsumer($topic);
                     $this->logger->debug(\sprintf('Consumer for topic %s successfully created.', $topic->getName()));
+                    $this->logger->info(\sprintf('Consumer is now listening on topic "%s".', $topic->getName()));
                 }
             } catch (UnauthorizedTopicOperationException $e) {
                 $this->logger->error(
@@ -70,29 +77,30 @@ final readonly class ConsumptionOrchestrator implements ConsumptionOrchestratorI
                 return;
             }
 
-            $this->logger->info(\sprintf('Consumer is now listening on topic "%s".', $topic->getName()));
-            $message = $consumer->receive();
+            $message = $consumer->consume(self::CONSUME_TIMEOUT_MS);
 
-            if ($message instanceof RdKafkaMessage) {
-                $this->logger->info(
-                    'Message received from consumer.',
-                    [
-                        'id' => $message->getMessageId(),
-                    ],
-                );
-
-                $rosselMessage = $this->handleMessage($message, $topic);
-
-                // Marque le message comme "traité"
-                $consumer->acknowledge($message);
-
-                if (null !== $rosselMessage && null !== $onMessageCallable) {
-                    $onMessageCallable($topic, $rosselMessage->getType());
-                }
-            } else {
+            if (\in_array($message->err, self::NO_MESSAGE_ERRORS, true)) {
                 if (null !== $onIdleCallable) {
                     $onIdleCallable($topic);
                 }
+
+                continue;
+            }
+
+            if (\RD_KAFKA_RESP_ERR_NO_ERROR !== $message->err) {
+                throw new \RuntimeException($message->errstr(), $message->err);
+            }
+
+            $messageId = \sprintf('%d:%d', $message->partition, $message->offset);
+            $this->logger->info('Message received from consumer.', ['id' => $messageId]);
+
+            $rosselMessage = $this->handleMessage($message, $messageId, $topic);
+
+            // Marque le message comme "traité"
+            $consumer->commit($message);
+
+            if (null !== $rosselMessage && null !== $onMessageCallable) {
+                $onMessageCallable($topic, $rosselMessage->getType());
             }
         }
     }
@@ -101,18 +109,18 @@ final readonly class ConsumptionOrchestrator implements ConsumptionOrchestratorI
      * A failing message is logged and skipped, so it never stops the listener.
      * Sends one log message per message that could be built.
      */
-    private function handleMessage(RdKafkaMessage $rdKafkaMessage, Topic $topic): ?Message
+    private function handleMessage(RdKafkaMessage $rdKafkaMessage, string $messageId, Topic $topic): ?Message
     {
         $message = null;
 
         try {
             $message = $this->messageFactory->createMessageFromRdKafka($rdKafkaMessage);
-            $consumed = $this->processRosselMessage($message, $topic);
+            $consumed = $this->processRosselMessage($message, $messageId, $topic);
         } catch (\Throwable $e) {
             $consumed = false;
             $this->logger->error(
-                \sprintf('Failed to process message #%s from topic "%s": %s', $rdKafkaMessage->getMessageId(), $topic->getName(), $e->getMessage()),
-                ['id' => $rdKafkaMessage->getMessageId(), 'topic' => $topic->getName(), 'exception' => $e],
+                \sprintf('Failed to process message #%s from topic "%s": %s', $messageId, $topic->getName(), $e->getMessage()),
+                ['id' => $messageId, 'topic' => $topic->getName(), 'exception' => $e],
             );
         }
 
@@ -125,10 +133,9 @@ final readonly class ConsumptionOrchestrator implements ConsumptionOrchestratorI
 
     private function processRosselMessage(
         Message $message,
+        string $messageId,
         Topic $topic,
     ): bool {
-        $messageId = $message->getRdKafkaMessage()->getMessageId();
-
         $this->logger->debug(
             \sprintf('Processing message #%s...', $messageId),
             [
@@ -137,7 +144,7 @@ final readonly class ConsumptionOrchestrator implements ConsumptionOrchestratorI
         );
 
         foreach ($this->consumers as $consumer) {
-            if (true === $this->tryConsumer($consumer, $message, $topic)) {
+            if (true === $this->tryConsumer($consumer, $message, $messageId, $topic)) {
                 return true;
             }
         }
@@ -161,10 +168,9 @@ final readonly class ConsumptionOrchestrator implements ConsumptionOrchestratorI
     private function tryConsumer(
         ConsumerInterface $consumer,
         Message $message,
+        string $messageId,
         Topic $topic,
     ): bool {
-        $messageId = $message->getRdKafkaMessage()->getMessageId();
-
         if (($supportsMessageType = $consumer->supportsMessageType($message))
             && ($supportsTopic = $consumer->supportsTopic($topic))
         ) {
@@ -212,9 +218,6 @@ final readonly class ConsumptionOrchestrator implements ConsumptionOrchestratorI
     }
 
     /**
-     * @throws InvalidDestinationException
-     * @throws InvalidMessageException
-     * @throws Exception
      * @throws \JsonException
      */
     private function sendLogMessage(
@@ -226,7 +229,7 @@ final readonly class ConsumptionOrchestrator implements ConsumptionOrchestratorI
             return;
         }
 
-        $originalHeaders = $originalMessage->getRdKafkaMessage()->getHeaders();
+        $originalHeaders = $originalMessage->getHeaders();
 
         $areaValue = $originalHeaders[MessageHeaders::KEY_AREA];
         $area = Area::from(\is_string($areaValue) ? $areaValue : '');

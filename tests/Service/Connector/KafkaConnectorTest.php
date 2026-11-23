@@ -138,16 +138,14 @@ final class KafkaConnectorTest extends TestCase
     }
 
     /**
-     * @return array<string, string>
+     * @return array<array-key, mixed>
      */
     private function consumerGlobalConfigOf(KafkaConnector $connector): array
     {
-        $context = (new \ReflectionMethod($connector, 'consumerContext'))->invoke($connector);
-        self::assertIsObject($context);
-        /** @var array{global: array<string, string>} $config */
-        $config = (new \ReflectionProperty($context, 'config'))->getValue($context);
+        $config = (new \ReflectionMethod($connector, 'consumerConfig'))->invoke($connector);
+        self::assertIsArray($config);
 
-        return $config['global'];
+        return $config;
     }
 
     private function producerOf(KafkaConnector $connector): mixed
