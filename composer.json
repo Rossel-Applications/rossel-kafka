@@ -26,6 +26,7 @@
         "ergebnis/composer-normalize": "^2.58",
         "phpstan/phpstan": "^2.1",
         "phpstan/phpstan-phpunit": "^2.0",
+        "phpstan/phpstan-symfony": "^2.0",
         "phpunit/phpunit": "^11"
     },
     "autoload": {
