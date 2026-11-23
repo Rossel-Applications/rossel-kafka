@@ -44,6 +44,21 @@ Its parameter is now the `RdKafka\Message` returned by `KafkaConsumer::consume()
 
 `KafkaConnector::send()` no longer declares `Interop\Queue\Exception` and its subclasses. Remove any `catch` for them.
 
+### `send()` waits for the broker and throws when the message is not delivered
+
+`send()` used to queue the message and return at once. Messages were only flushed when the process exited, after the caller had already acted on a send it took as done, and a delivery failure was never reported. A crash or an unreachable broker lost the message silently.
+
+`send()` now returns once the broker has acknowledged the message, and throws `Rossel\RosselKafka\Exception\MessageNotDeliveredException` when the broker refuses it or does not acknowledge it within 30 seconds (`delivery.timeout.ms`, which used to be 6 days). Catch it where a failed send must not stop the process, and do not acknowledge the source of the message:
+
+```php
+try {
+    $kafkaConnector->send($topic, $message);
+    $event->markAsPublished();
+} catch (MessageNotDeliveredException $e) {
+    $event->markAsFailed($e->getMessage()); // sent again on the next run
+}
+```
+
 ## New features
 
 ### Consumed messages are logged with their position

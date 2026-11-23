@@ -6,9 +6,12 @@ namespace Rossel\RosselKafka\Tests\Service\Connector;
 
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use RdKafka\Producer;
 use Rossel\RosselKafka\Enum\Config\Broker\TopicConfigKeys;
 use Rossel\RosselKafka\Enum\MessageHeaders\Area;
 use Rossel\RosselKafka\Enum\MessageHeaders\MessageType;
+use Rossel\RosselKafka\Enum\Topic\TopicDirection;
+use Rossel\RosselKafka\Exception\MessageNotDeliveredException;
 use Rossel\RosselKafka\Exception\UnauthorizedTopicOperationException;
 use Rossel\RosselKafka\Model\Message;
 use Rossel\RosselKafka\Model\MessageHeaders;
@@ -18,6 +21,9 @@ use Rossel\RosselKafka\Service\Ssl\SslCertificateProvider;
 
 final class KafkaConnectorTest extends TestCase
 {
+    // Nothing listens on port 1: no message can be delivered.
+    private const UNREACHABLE_BROKER = 'kafka://127.0.0.1:1';
+
     #[Test]
     public function shouldNotCreateProducerOnConstruction(): void
     {
@@ -46,6 +52,32 @@ final class KafkaConnectorTest extends TestCase
 
         self::assertInstanceOf(UnauthorizedTopicOperationException::class, $exception);
         self::assertNull($this->producerOf($connector));
+    }
+
+    #[Test]
+    public function shouldThrowWhenTheBrokerDoesNotConfirmDelivery(): void
+    {
+        $connector = $this->buildConnector(brokerUrl: self::UNREACHABLE_BROKER, deliveryTimeoutMs: 500);
+
+        $this->expectException(MessageNotDeliveredException::class);
+        $this->expectExceptionMessage('Local: Message timed out');
+
+        $connector->send($this->buildProducibleTopic(), $this->buildMessage());
+    }
+
+    #[Test]
+    public function shouldLeaveNothingQueuedWhenDeliveryFails(): void
+    {
+        $connector = $this->buildConnector(brokerUrl: self::UNREACHABLE_BROKER, deliveryTimeoutMs: 500);
+
+        try {
+            $connector->send($this->buildProducibleTopic(), $this->buildMessage());
+        } catch (MessageNotDeliveredException) {
+        }
+
+        $producer = $this->producerOf($connector);
+        self::assertInstanceOf(Producer::class, $producer);
+        self::assertSame(0, $producer->getOutQLen());
     }
 
     #[Test]
@@ -109,9 +141,11 @@ final class KafkaConnectorTest extends TestCase
         ?string $sslCaCertificatePath = null,
         ?string $saslUsername = null,
         ?string $saslPassword = null,
+        string $brokerUrl = 'kafka://localhost:9092',
+        int $deliveryTimeoutMs = 30_000,
     ): KafkaConnector {
         return new KafkaConnector(
-            brokerUrl: 'kafka://localhost:9092',
+            brokerUrl: $brokerUrl,
             appName: 'test-app',
             saslUsername: $saslUsername,
             saslPassword: $saslPassword,
@@ -122,6 +156,16 @@ final class KafkaConnectorTest extends TestCase
             sslClientKey: null,
             sslClientKeyPassword: null,
             sslCertificateProvider: new SslCertificateProvider(),
+            deliveryTimeoutMs: $deliveryTimeoutMs,
+        );
+    }
+
+    private function buildProducibleTopic(): Topic
+    {
+        return new Topic(
+            configKey: TopicConfigKeys::KAFKA_TOPIC_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE,
+            name: 'log.output',
+            direction: TopicDirection::PRODUCE,
         );
     }
 
