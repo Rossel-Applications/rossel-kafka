@@ -115,7 +115,7 @@ final class KafkaConnector implements KafkaConnectorInterface
             // Served by flush(): the broker's answer for each message.
             $conf->setDrMsgCb(function (Producer $producer, Message $message): void {
                 if (\RD_KAFKA_RESP_ERR_NO_ERROR !== $message->err) {
-                    $this->deliveryError = $message->errstr();
+                    $this->deliveryError = rd_kafka_err2str($message->err);
                 }
             });
             $this->rdKafkaProducer = new Producer($conf);
