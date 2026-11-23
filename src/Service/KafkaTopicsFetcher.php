@@ -45,7 +45,9 @@ final class KafkaTopicsFetcher implements KafkaTopicsFetcherInterface
         ],
         TopicConfigKeys::KAFKA_TOPIC_PUBLIC_SUBSCRIPTION_INPUT_V1_JSON_DELETE->name => [
             MessageType::CANCEL_B2C_SUBSCRIPTION,
+            MessageType::CHANGE_EDITION,
             MessageType::CHANGE_OFFER,
+            MessageType::CREATE_B2C_ERP_SUBSCRIPTION,
             MessageType::CREATE_OR_UPDATE_MOVING_ADDRESS,
             MessageType::CREATE_OR_UPDATE_SEPA,
             MessageType::CREATE_OR_UPDATE_SUSPENSION,
@@ -55,6 +57,7 @@ final class KafkaTopicsFetcher implements KafkaTopicsFetcherInterface
             MessageType::DELETE_SUSPENSION,
             MessageType::DELETE_TEMPORARY_DELIVERY_ADDRESS,
             MessageType::REQUEST_SYNC_B2C_ERP_SUBSCRIPTION,
+            MessageType::UPDATE_DELIVERY_METHOD,
             MessageType::UPDATE_INVOICE_ADDRESS,
         ],
         TopicConfigKeys::KAFKA_TOPIC_PUBLIC_SUBSCRIPTION_OUTPUT_V1_JSON_DELETE->name => [

@@ -8,9 +8,11 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Rossel\RosselKafka\Enum\Config\Broker\TopicConfigKeys;
+use Rossel\RosselKafka\Enum\MessageHeaders\Area;
 use Rossel\RosselKafka\Enum\MessageHeaders\MessageType;
 use Rossel\RosselKafka\Enum\Topic\TopicDirection;
 use Rossel\RosselKafka\Exception\UnconfiguredTopicException;
+use Rossel\RosselKafka\Model\MessageHeaders;
 use Rossel\RosselKafka\Model\Topic;
 use Rossel\RosselKafka\Service\KafkaTopicsFetcher;
 
@@ -191,6 +193,36 @@ final class KafkaTopicsFetcherTest extends TestCase
         $topics = $fetcher->getByMessageType(MessageType::CANCEL_B2C_SUBSCRIPTION);
 
         self::assertEmpty($topics);
+    }
+
+    /** @return iterable<string, array{string}> */
+    public static function erpCommandProvider(): iterable
+    {
+        yield 'creation' => ['CREATE_B2C_ERP_SUBSCRIPTION'];
+        yield 'distribution' => ['UPDATE_DELIVERY_METHOD'];
+        yield 'edition' => ['CHANGE_EDITION'];
+        yield 'offer' => ['CHANGE_OFFER'];
+    }
+
+    #[Test]
+    #[DataProvider('erpCommandProvider')]
+    public function erpCommandsUseTheSubscriptionInputTopic(string $command): void
+    {
+        $fetcher = new KafkaTopicsFetcher([
+            TopicConfigKeys::KAFKA_TOPIC_PUBLIC_SUBSCRIPTION_INPUT_V1_JSON_DELETE->value => 'public.test.bo.erp-adapter.subscription.input.v1.json.delete',
+            TopicConfigKeys::KAFKA_TOPIC_PUBLIC_SUBSCRIPTION_OUTPUT_V1_JSON_DELETE->value => 'subscription.output',
+            TopicConfigKeys::KAFKA_TOPIC_PUBLIC_LOG_OUTPUT_V1_JSON_DELETE->value => 'log.output',
+        ]);
+        $type = MessageType::from($command);
+        $topics = array_values($fetcher->getByMessageType($type));
+
+        self::assertCount(1, $topics);
+        self::assertSame(TopicConfigKeys::KAFKA_TOPIC_PUBLIC_SUBSCRIPTION_INPUT_V1_JSON_DELETE, $topics[0]->getConfigKey());
+        self::assertSame('public.test.bo.erp-adapter.subscription.input.v1.json.delete', $topics[0]->getName());
+        self::assertTrue($topics[0]->isProducible());
+
+        $headers = new MessageHeaders(area: Area::FRANCE, from: 'gma-uma', messageType: $type);
+        self::assertSame($command, $headers->toArray()['messageType']);
     }
 
     #[Test]
