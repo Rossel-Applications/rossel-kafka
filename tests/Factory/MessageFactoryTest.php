@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Rossel\RosselKafka\Tests\Factory;
 
-use Enqueue\RdKafka\RdKafkaMessage;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use RdKafka\Message as RdKafkaMessage;
 use Rossel\RosselKafka\Enum\MessageHeaders\Area;
 use Rossel\RosselKafka\Enum\MessageHeaders\MessageType;
 use Rossel\RosselKafka\Factory\MessageFactory;
@@ -49,19 +49,18 @@ final class MessageFactoryTest extends TestCase
         $message = $this->factory->createMessageFromRdKafka($rdMessage);
 
         self::assertSame(MessageType::EXEC_SUCCESS, $message->getType());
-        self::assertSame('BE', $message->getRdKafkaMessage()->getHeaders()[MessageHeaders::KEY_AREA]);
+        self::assertSame('BE', $message->getHeaders()[MessageHeaders::KEY_AREA]);
     }
 
     #[Test]
     public function keyIsCopiedFromRdKafkaMessage(): void
     {
         $rdMessage = $this->buildRdKafkaMessage('{}');
-        $rdMessage->setKey('subscription-42');
+        $rdMessage->key = 'subscription-42';
 
         $message = $this->factory->createMessageFromRdKafka($rdMessage);
 
         self::assertSame('subscription-42', $message->getKey());
-        self::assertSame('subscription-42', $message->getRdKafkaMessage()->getKey());
     }
 
     #[Test]
@@ -169,7 +168,7 @@ final class MessageFactoryTest extends TestCase
 
         $message = $this->factory->createMessageFromRdKafka($rdMessage);
 
-        self::assertSame('my-track-id', $message->getRdKafkaMessage()->getHeaders()[MessageHeaders::KEY_TRACK_ID]);
+        self::assertSame('my-track-id', $message->getHeaders()[MessageHeaders::KEY_TRACK_ID]);
     }
 
     #[Test]
@@ -196,8 +195,8 @@ final class MessageFactoryTest extends TestCase
         $message = $this->factory->createMessageFromRdKafka($rdMessage);
 
         // Verify headers are in the output
-        $headers = $message->getRdKafkaMessage()->getHeaders();
-        self::assertStringContainsString('2024-06-15', $headers[MessageHeaders::KEY_DATE_TIME]);
+        $headers = $message->getHeaders();
+        self::assertSame('2024-06-15T12:00:00+00:00', $headers[MessageHeaders::KEY_DATE_TIME]);
     }
 
     #[Test]
@@ -210,7 +209,7 @@ final class MessageFactoryTest extends TestCase
 
         $message = $this->factory->createMessageFromRdKafka($rdMessage);
 
-        $outputHeaders = $message->getRdKafkaMessage()->getHeaders();
+        $outputHeaders = $message->getHeaders();
         self::assertSame('corr-999', $outputHeaders['x-correlation-id']);
         self::assertSame('custom-value', $outputHeaders['x-custom-header']);
     }
@@ -240,10 +239,12 @@ final class MessageFactoryTest extends TestCase
     {
         $this->expectException(\Exception::class);
 
+        /** @var array<string, string> $headers rdkafka accepts any array, these tests exercise header validation */
         $headers = $this->buildDefaultHeaders();
         unset($headers[$missingKey]);
 
-        $rdMessage = new RdKafkaMessage(body: '{}', headers: $headers);
+        $rdMessage = $this->buildRdKafkaMessage('{}');
+        $rdMessage->headers = $headers;
         $this->factory->createMessageFromRdKafka($rdMessage);
     }
 
@@ -343,9 +344,14 @@ final class MessageFactoryTest extends TestCase
      */
     private function buildRdKafkaMessage(string $body, array $extraHeaders = []): RdKafkaMessage
     {
+        $message = new RdKafkaMessage();
+        $message->err = \RD_KAFKA_RESP_ERR_NO_ERROR;
+        $message->payload = $body;
+        /** @var array<string, string> $headers rdkafka accepts any array, these tests exercise header validation */
         $headers = array_merge($this->buildDefaultHeaders(), $extraHeaders);
+        $message->headers = $headers;
 
-        return new RdKafkaMessage(body: $body, headers: $headers);
+        return $message;
     }
 
     /**

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Rossel\RosselKafka\Model;
 
-use Enqueue\RdKafka\RdKafkaMessage;
 use Rossel\RosselKafka\Enum\MessageHeaders\MessageType;
 
 /**
@@ -12,7 +11,17 @@ use Rossel\RosselKafka\Enum\MessageHeaders\MessageType;
  */
 interface MessageInterface
 {
-    public function getRdKafkaMessage(): RdKafkaMessage;
+    /**
+     * Returns the Kafka record value.
+     */
+    public function getBody(): string;
+
+    /**
+     * Returns the Kafka record headers.
+     *
+     * @return array<string, scalar>
+     */
+    public function getHeaders(): array;
 
     /**
      * Returns the type of the message.

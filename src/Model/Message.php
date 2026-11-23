@@ -4,16 +4,13 @@ declare(strict_types=1);
 
 namespace Rossel\RosselKafka\Model;
 
-use Enqueue\RdKafka\RdKafkaMessage;
 use Rossel\RosselKafka\Enum\MessageHeaders\MessageType;
 
 /**
- * Representation of a Kafka message, wrapping RdKafkaMessage class.
+ * Representation of a Kafka message.
  */
 readonly class Message implements MessageInterface
 {
-    private RdKafkaMessage $rdKafkaMessage;
-
     private string $body;
 
     /**
@@ -35,12 +32,6 @@ readonly class Message implements MessageInterface
         }
 
         $this->body = $body;
-
-        $this->rdKafkaMessage = new RdKafkaMessage(
-            body: $this->body,
-            headers: $this->headers->toArray(),
-        );
-        $this->rdKafkaMessage->setKey($this->key);
     }
 
     /**
@@ -51,9 +42,12 @@ readonly class Message implements MessageInterface
         return $this->headers->getMessageType();
     }
 
-    public function getRdKafkaMessage(): RdKafkaMessage
+    /**
+     * {@inheritDoc}
+     */
+    public function getHeaders(): array
     {
-        return $this->rdKafkaMessage;
+        return $this->headers->toArray();
     }
 
     /**

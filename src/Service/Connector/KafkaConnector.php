@@ -4,36 +4,25 @@ declare(strict_types=1);
 
 namespace Rossel\RosselKafka\Service\Connector;
 
-use Enqueue\RdKafka\RdKafkaConsumer;
-use Enqueue\RdKafka\RdKafkaContext;
-use Enqueue\RdKafka\RdKafkaProducer;
-use Enqueue\RdKafka\RdKafkaTopic;
-use Interop\Queue\Exception;
-use Interop\Queue\Exception\InvalidDestinationException;
-use Interop\Queue\Exception\InvalidMessageException;
+use RdKafka\Conf;
+use RdKafka\KafkaConsumer;
+use RdKafka\Producer;
+use RdKafka\ProducerTopic;
 use Rossel\RosselKafka\Exception\UnauthorizedTopicOperationException;
 use Rossel\RosselKafka\Model\MessageInterface;
 use Rossel\RosselKafka\Model\Topic;
-use Rossel\RosselKafka\Service\Serializer\RawKafkaSerializer;
 use Rossel\RosselKafka\Service\Ssl\SslCertificateProvider;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 final class KafkaConnector implements KafkaConnectorInterface
 {
-    private ?RdKafkaContext $rdKafkaProducerContext = null;
-
-    private ?RdKafkaContext $rdKafkaConsumerContext = null;
-
     /** @var array<string, string>|null */
     private ?array $commonGlobalConfig = null;
 
-    private ?RdKafkaProducer $rdKafkaProducer = null;
+    private ?Producer $rdKafkaProducer = null;
 
-    /** @var array<string, RdKafkaTopic> */
+    /** @var array<string, ProducerTopic> */
     private array $producerTopics = [];
-
-    /** @var array<string, RdKafkaTopic> */
-    private array $consumerTopics = [];
 
     public function __construct(
         #[Autowire(param: 'rossel_kafka.broker.url')]
@@ -63,61 +52,65 @@ final class KafkaConnector implements KafkaConnectorInterface
     }
 
     /**
-     * Send a message to a Kafka topic.
-     *
-     * @throws InvalidDestinationException
-     * @throws InvalidMessageException
-     * @throws Exception
+     * Send a message to a Kafka topic. The record value is the raw body, metadata travels in Kafka headers.
      */
-    public function send(Topic|RdKafkaTopic $topic, MessageInterface $message): void
+    public function send(Topic $topic, MessageInterface $message): void
     {
-        if ($topic instanceof Topic) {
-            if (!$topic->isProducible()) {
-                throw UnauthorizedTopicOperationException::produce($topic);
-            }
-
-            $topic = $this->getProducerTopic($topic);
+        if (!$topic->isProducible()) {
+            throw UnauthorizedTopicOperationException::produce($topic);
         }
 
-        // Created on first send, so consumer-only apps never open a producer.
-        $this->rdKafkaProducer ??= $this->producerContext()->createProducer();
-        $this->rdKafkaProducer->send(
-            $topic,
-            $message->getRdKafkaMessage(),
+        $producer = $this->producer();
+        $this->producerTopics[$topic->getName()] ??= $producer->newTopic($topic->getName());
+        $this->producerTopics[$topic->getName()]->producev(
+            \RD_KAFKA_PARTITION_UA,
+            0,
+            $message->getBody(),
+            $message->getKey(),
+            $message->getHeaders(),
         );
+        $producer->poll(0);
     }
 
     /**
-     * Create a consumer object, which is responsible for listening messages published on a topic.
+     * Create a consumer subscribed to the topic.
      */
-    public function createConsumer(Topic $topic): RdKafkaConsumer
+    public function createConsumer(Topic $topic): KafkaConsumer
     {
         if (!$topic->isConsumable()) {
             throw UnauthorizedTopicOperationException::consume($topic);
         }
 
-        return $this->consumerContext()->createConsumer($this->getConsumerTopic($topic));
+        $consumer = new KafkaConsumer($this->conf($this->consumerConfig()));
+        $consumer->subscribe([$topic->getName()]);
+
+        return $consumer;
     }
 
-    private function getProducerTopic(Topic $topic): RdKafkaTopic
+    // Created on first send, so consumer-only apps never open a producer.
+    private function producer(): Producer
     {
-        return $this->producerTopics[$topic->getName()] ??= $this->producerContext()->createTopic($topic->getName());
+        if (null === $this->rdKafkaProducer) {
+            $this->rdKafkaProducer = new Producer($this->conf($this->producerConfig()));
+            // linger.ms buffers messages: deliver them before the process exits.
+            register_shutdown_function($this->rdKafkaProducer->flush(...), -1);
+        }
+
+        return $this->rdKafkaProducer;
     }
 
-    private function getConsumerTopic(Topic $topic): RdKafkaTopic
+    /**
+     * @param array<string, string> $config
+     */
+    private function conf(array $config): Conf
     {
-        return $this->consumerTopics[$topic->getName()] ??= $this->consumerContext()->createTopic($topic->getName());
-    }
+        $conf = new Conf();
 
-    // Built on first use, so the SSL certificates are only resolved (and downloaded) when a connection is needed.
-    private function producerContext(): RdKafkaContext
-    {
-        return $this->rdKafkaProducerContext ??= $this->buildProducerContext();
-    }
+        foreach ($config as $name => $value) {
+            $conf->set($name, $value);
+        }
 
-    private function consumerContext(): RdKafkaContext
-    {
-        return $this->rdKafkaConsumerContext ??= $this->buildConsumerContext();
+        return $conf;
     }
 
     /**
@@ -186,59 +179,35 @@ final class KafkaConnector implements KafkaConnectorInterface
         return $config;
     }
 
-    private function buildProducerContext(): RdKafkaContext
+    /**
+     * @return array<string, string>
+     */
+    private function producerConfig(): array
     {
-        /** @var array<string, string> $globalConfig */
-        $globalConfig = array_merge(
-            $this->commonGlobalConfig(),
-            [
-                'enable.idempotence' => 'true',
-                'retries' => '2147483647',
-                'linger.ms' => '100',
-                'batch.size' => '16384',
-            ]
-        );
-
-        $context = new RdKafkaContext([
-            'global' => $globalConfig,
-            'topic' => [
-                'request.required.acks' => 'all',
-                'delivery.timeout.ms' => '518400000', // 6 days
-                'compression.type' => 'gzip',
-            ],
-        ]);
-
-        // Align with the Rossel Kafka cluster contract: value carries the raw
-        // business payload, metadata travels in real Kafka headers.
-        $context->setSerializer(new RawKafkaSerializer());
-
-        return $context;
+        return [
+            ...$this->commonGlobalConfig(),
+            'enable.idempotence' => 'true',
+            'retries' => '2147483647',
+            'linger.ms' => '100',
+            'batch.size' => '16384',
+            'request.required.acks' => 'all',
+            'delivery.timeout.ms' => '518400000', // 6 days
+            'compression.type' => 'gzip',
+        ];
     }
 
-    private function buildConsumerContext(): RdKafkaContext
+    /**
+     * @return array<string, string>
+     */
+    private function consumerConfig(): array
     {
-        /** @var array<string, string> $globalConfig */
-        $globalConfig = array_merge(
-            $this->commonGlobalConfig(),
-            [
-                'group.id' => $this->appName,
-                // Offsets are committed by acknowledge(), once the message is processed.
-                'enable.auto.commit' => 'false',
-                'fetch.min.bytes' => '1000',
-            ]
-        );
-
-        $context = new RdKafkaContext([
-            'global' => $globalConfig,
-            'topic' => [
-                'auto.offset.reset' => 'latest',
-            ],
-        ]);
-
-        // Align with the Rossel Kafka cluster contract: value carries the raw
-        // business payload, metadata travels in real Kafka headers.
-        $context->setSerializer(new RawKafkaSerializer());
-
-        return $context;
+        return [
+            ...$this->commonGlobalConfig(),
+            'group.id' => $this->appName,
+            // Offsets are committed by ConsumptionOrchestrator, once the message is processed.
+            'enable.auto.commit' => 'false',
+            'fetch.min.bytes' => '1000',
+            'auto.offset.reset' => 'latest',
+        ];
     }
 }

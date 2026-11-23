@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace Rossel\RosselKafka\Tests\Orchestrator;
 
-use Enqueue\RdKafka\RdKafkaConsumer;
-use Enqueue\RdKafka\RdKafkaMessage;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use RdKafka\KafkaConsumer as RdKafkaConsumer;
+use RdKafka\Message as RdKafkaMessage;
 use Rossel\RosselKafka\Consumer\ConsumerInterface;
 use Rossel\RosselKafka\Enum\Config\Broker\TopicConfigKeys;
 use Rossel\RosselKafka\Enum\MessageHeaders\Area;
@@ -23,7 +24,7 @@ use Rossel\RosselKafka\Service\Connector\KafkaConnectorInterface;
 
 /**
  * ConsumptionOrchestrator::listen() runs an infinite loop.
- * Tests break the loop by configuring the mocked RdKafkaConsumer::receive()
+ * Tests break the loop by configuring the mocked KafkaConsumer::consume()
  * to throw a \RuntimeException after a controlled number of calls.
  * Each test wraps listen() in a try/catch and asserts on side-effects.
  */
@@ -117,22 +118,24 @@ final class ConsumptionOrchestratorTest extends TestCase
     // Idle (no message)
     // -------------------------------------------------------------------------
 
+    /**
+     * @return iterable<string, array{int}>
+     */
+    public static function noMessageErrorProvider(): iterable
+    {
+        yield 'timed out' => [\RD_KAFKA_RESP_ERR__TIMED_OUT];
+        yield 'partition EOF' => [\RD_KAFKA_RESP_ERR__PARTITION_EOF];
+        yield 'transport' => [\RD_KAFKA_RESP_ERR__TRANSPORT];
+    }
+
     #[Test]
-    public function onIdleCallableIsCalledWhenNoMessageReceived(): void
+    #[DataProvider('noMessageErrorProvider')]
+    public function shouldCallOnIdleCallableWhenNoMessageIsConsumed(int $error): void
     {
         $idleCalled = false;
-
-        // First receive() returns null (idle), second breaks the loop
-        $callCount = 0;
-        $this->rdKafkaConsumer
-            ->method('receive')
-            ->willReturnCallback(function () use (&$callCount): ?RdKafkaMessage {
-                ++$callCount;
-                if (1 === $callCount) {
-                    return null;
-                }
-                throw new \RuntimeException('Break loop');
-            });
+        $this->configureReceiveToBreakAfterOneMessage($this->kafkaMessage('', $error));
+        $this->factory->expects($this->never())->method('createMessageFromRdKafka');
+        $this->rdKafkaConsumer->expects($this->never())->method('commit');
 
         try {
             $this->buildOrchestrator()->listen(
@@ -147,6 +150,34 @@ final class ConsumptionOrchestratorTest extends TestCase
         self::assertTrue($idleCalled);
     }
 
+    #[Test]
+    public function shouldStopListeningWhenConsumeFails(): void
+    {
+        $this->configureReceiveToBreakAfterOneMessage($this->kafkaMessage('', \RD_KAFKA_RESP_ERR__FATAL));
+        $this->rdKafkaConsumer->expects($this->never())->method('commit');
+
+        $exception = $this->listenUntilLoopBreaks($this->buildOrchestrator());
+
+        self::assertInstanceOf(\RuntimeException::class, $exception);
+        self::assertSame(\RD_KAFKA_RESP_ERR__FATAL, $exception->getCode());
+        self::assertNotSame('Break infinite loop', $exception->getMessage());
+    }
+
+    #[Test]
+    public function shouldLogListeningOnceWhileIdle(): void
+    {
+        $this->configureReceiveToBreakAfter(3);
+        /** @var \ArrayObject<int, string> $infos */
+        $infos = new \ArrayObject();
+        $this->logger->method('info')->willReturnCallback(function (string $message) use ($infos): void {
+            $infos[] = $message;
+        });
+
+        $this->listenUntilLoopBreaks($this->buildOrchestrator());
+
+        self::assertCount(1, array_filter($infos->getArrayCopy(), static fn (string $m): bool => str_contains($m, 'now listening')));
+    }
+
     // -------------------------------------------------------------------------
     // Message received and consumed
     // -------------------------------------------------------------------------
@@ -154,7 +185,7 @@ final class ConsumptionOrchestratorTest extends TestCase
     #[Test]
     public function matchingConsumerIsInvokedForReceivedMessage(): void
     {
-        $rdKafkaMessage = new RdKafkaMessage(body: 'EXEC_SUCCESS');
+        $rdKafkaMessage = $this->kafkaMessage('EXEC_SUCCESS');
         $this->configureReceiveToBreakAfterOneMessage($rdKafkaMessage);
 
         $this->factory
@@ -172,7 +203,7 @@ final class ConsumptionOrchestratorTest extends TestCase
         // connector->send() called for the log message
         $this->connector->expects($this->once())->method('send');
 
-        $this->rdKafkaConsumer->expects($this->once())->method('acknowledge');
+        $this->rdKafkaConsumer->expects($this->once())->method('commit');
 
         try {
             $this->buildOrchestrator([$consumer])->listen($this->topic);
@@ -183,7 +214,7 @@ final class ConsumptionOrchestratorTest extends TestCase
     #[Test]
     public function onMessageCallableIsCalledAfterSuccessfulConsumption(): void
     {
-        $rdKafkaMessage = new RdKafkaMessage(body: 'EXEC_SUCCESS');
+        $rdKafkaMessage = $this->kafkaMessage('EXEC_SUCCESS');
         $this->configureReceiveToBreakAfterOneMessage($rdKafkaMessage);
 
         $this->factory->method('createMessageFromRdKafka')->willReturn($this->message);
@@ -213,7 +244,7 @@ final class ConsumptionOrchestratorTest extends TestCase
     #[Test]
     public function messageIsAcknowledgedAfterProcessing(): void
     {
-        $rdKafkaMessage = new RdKafkaMessage(body: 'EXEC_SUCCESS');
+        $rdKafkaMessage = $this->kafkaMessage('EXEC_SUCCESS');
         $this->configureReceiveToBreakAfterOneMessage($rdKafkaMessage);
 
         $this->factory->method('createMessageFromRdKafka')->willReturn($this->message);
@@ -224,7 +255,7 @@ final class ConsumptionOrchestratorTest extends TestCase
         $consumer->method('supportsMessageType')->willReturn(true);
         $consumer->method('supportsTopic')->willReturn(true);
 
-        $this->rdKafkaConsumer->expects($this->once())->method('acknowledge')->with($rdKafkaMessage);
+        $this->rdKafkaConsumer->expects($this->once())->method('commit')->with($rdKafkaMessage);
 
         try {
             $this->buildOrchestrator([$consumer])->listen($this->topic);
@@ -239,7 +270,7 @@ final class ConsumptionOrchestratorTest extends TestCase
     #[Test]
     public function consumerNotCalledWhenMessageTypeNotSupported(): void
     {
-        $rdKafkaMessage = new RdKafkaMessage(body: 'body');
+        $rdKafkaMessage = $this->kafkaMessage('body');
         $this->configureReceiveToBreakAfterOneMessage($rdKafkaMessage);
         $this->factory->method('createMessageFromRdKafka')->willReturn($this->message);
         $this->connector->method('send');
@@ -258,7 +289,7 @@ final class ConsumptionOrchestratorTest extends TestCase
     #[Test]
     public function consumerNotCalledWhenTopicNotSupported(): void
     {
-        $rdKafkaMessage = new RdKafkaMessage(body: 'body');
+        $rdKafkaMessage = $this->kafkaMessage('body');
         $this->configureReceiveToBreakAfterOneMessage($rdKafkaMessage);
         $this->factory->method('createMessageFromRdKafka')->willReturn($this->message);
         $this->connector->method('send');
@@ -278,7 +309,7 @@ final class ConsumptionOrchestratorTest extends TestCase
     #[Test]
     public function errorIsLoggedWhenNoConsumerMatchesMessage(): void
     {
-        $rdKafkaMessage = new RdKafkaMessage(body: 'body');
+        $rdKafkaMessage = $this->kafkaMessage('body');
         $this->configureReceiveToBreakAfterOneMessage($rdKafkaMessage);
         $this->factory->method('createMessageFromRdKafka')->willReturn($this->message);
         $this->connector->method('send');
@@ -296,7 +327,7 @@ final class ConsumptionOrchestratorTest extends TestCase
     #[Test]
     public function firstMatchingConsumerStopsIterationOverRemainingConsumers(): void
     {
-        $rdKafkaMessage = new RdKafkaMessage(body: 'body');
+        $rdKafkaMessage = $this->kafkaMessage('body');
         $this->configureReceiveToBreakAfterOneMessage($rdKafkaMessage);
         $this->factory->method('createMessageFromRdKafka')->willReturn($this->message);
         $this->connector->method('send');
@@ -325,7 +356,7 @@ final class ConsumptionOrchestratorTest extends TestCase
     #[Test]
     public function successLogMessageSentAfterSuccessfulConsumption(): void
     {
-        $rdKafkaMessage = new RdKafkaMessage(body: 'body');
+        $rdKafkaMessage = $this->kafkaMessage('body');
         $this->configureReceiveToBreakAfterOneMessage($rdKafkaMessage);
         $this->factory->method('createMessageFromRdKafka')->willReturn($this->message);
 
@@ -354,7 +385,7 @@ final class ConsumptionOrchestratorTest extends TestCase
     #[Test]
     public function shouldNotSendLogMessageWhenDisabled(): void
     {
-        $this->configureReceiveToBreakAfterOneMessage(new RdKafkaMessage(body: 'body'));
+        $this->configureReceiveToBreakAfterOneMessage($this->kafkaMessage('body'));
         $this->factory->method('createMessageFromRdKafka')->willReturn($this->message);
         /** @var MockObject&ConsumerInterface $consumer */
         $consumer = $this->createMock(ConsumerInterface::class);
@@ -377,7 +408,7 @@ final class ConsumptionOrchestratorTest extends TestCase
     #[Test]
     public function shouldSendOnlySuccessLogMessageWhenSecondConsumerMatches(): void
     {
-        $this->configureReceiveToBreakAfterOneMessage(new RdKafkaMessage(body: 'body'));
+        $this->configureReceiveToBreakAfterOneMessage($this->kafkaMessage('body'));
         $this->factory->method('createMessageFromRdKafka')->willReturn($this->message);
         $sentBodies = $this->spySentBodies();
         $orchestrator = $this->buildOrchestrator([$this->consumer(matches: false), $this->consumer(matches: true)]);
@@ -390,7 +421,7 @@ final class ConsumptionOrchestratorTest extends TestCase
     #[Test]
     public function shouldSendOneErrorLogMessageWhenNoConsumerMatches(): void
     {
-        $this->configureReceiveToBreakAfterOneMessage(new RdKafkaMessage(body: 'body'));
+        $this->configureReceiveToBreakAfterOneMessage($this->kafkaMessage('body'));
         $this->factory->method('createMessageFromRdKafka')->willReturn($this->message);
         $sentBodies = $this->spySentBodies();
         $orchestrator = $this->buildOrchestrator([$this->consumer(matches: false), $this->consumer(matches: false)]);
@@ -407,7 +438,7 @@ final class ConsumptionOrchestratorTest extends TestCase
     #[Test]
     public function shouldKeepListeningWhenConsumerThrows(): void
     {
-        $rdKafkaMessage = new RdKafkaMessage(body: 'body');
+        $rdKafkaMessage = $this->kafkaMessage('body');
         $this->configureReceiveToBreakAfterOneMessage($rdKafkaMessage);
         $this->factory->method('createMessageFromRdKafka')->willReturn($this->message);
         $consumer = $this->consumer(matches: true);
@@ -427,7 +458,7 @@ final class ConsumptionOrchestratorTest extends TestCase
     #[Test]
     public function shouldKeepListeningWhenMessageHeadersAreInvalid(): void
     {
-        $rdKafkaMessage = new RdKafkaMessage(body: 'body');
+        $rdKafkaMessage = $this->kafkaMessage('body');
         $this->configureReceiveToBreakAfterOneMessage($rdKafkaMessage);
         $this->factory->method('createMessageFromRdKafka')->willThrowException(new \InvalidArgumentException('Invalid headers'));
         $sentBodies = $this->spySentBodies();
@@ -462,31 +493,42 @@ final class ConsumptionOrchestratorTest extends TestCase
     }
 
     /**
-     * Configure receive() to throw after N idle (null) calls.
+     * Configure consume() to throw after N idle (timed out) calls.
      */
     private function configureReceiveToBreakAfter(int $nullCallsBeforeBreak): void
     {
         $callCount = 0;
         $this->rdKafkaConsumer
-            ->method('receive')
-            ->willReturnCallback(function () use (&$callCount, $nullCallsBeforeBreak): ?RdKafkaMessage {
+            ->method('consume')
+            ->willReturnCallback(function () use (&$callCount, $nullCallsBeforeBreak): RdKafkaMessage {
                 if ($callCount < $nullCallsBeforeBreak) {
                     ++$callCount;
 
-                    return null;
+                    return $this->kafkaMessage('', \RD_KAFKA_RESP_ERR__TIMED_OUT);
                 }
                 throw new \RuntimeException('Break infinite loop');
             });
     }
 
+    private function kafkaMessage(string $payload, int $error = \RD_KAFKA_RESP_ERR_NO_ERROR): RdKafkaMessage
+    {
+        $message = new RdKafkaMessage();
+        $message->err = $error;
+        $message->payload = $payload;
+        $message->partition = 0;
+        $message->offset = 42;
+
+        return $message;
+    }
+
     /**
-     * Configure receive() to return a message on the first call, then break.
+     * Configure consume() to return a message on the first call, then break.
      */
     private function configureReceiveToBreakAfterOneMessage(RdKafkaMessage $rdKafkaMessage): void
     {
         $callCount = 0;
         $this->rdKafkaConsumer
-            ->method('receive')
+            ->method('consume')
             ->willReturnCallback(function () use (&$callCount, $rdKafkaMessage): RdKafkaMessage {
                 ++$callCount;
 
@@ -545,7 +587,7 @@ final class ConsumptionOrchestratorTest extends TestCase
     {
         /** @var \ArrayObject<int, RdKafkaMessage> $acknowledged */
         $acknowledged = new \ArrayObject();
-        $this->rdKafkaConsumer->method('acknowledge')->willReturnCallback(function (RdKafkaMessage $message) use ($acknowledged): void {
+        $this->rdKafkaConsumer->method('commit')->willReturnCallback(function (RdKafkaMessage $message) use ($acknowledged): void {
             $acknowledged[] = $message;
         });
 
