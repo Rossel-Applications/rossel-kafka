@@ -4,14 +4,16 @@ declare(strict_types=1);
 
 namespace Rossel\RosselKafka\Service\Connector;
 
-use Enqueue\RdKafka\RdKafkaConsumer;
-use Enqueue\RdKafka\RdKafkaTopic;
+use RdKafka\KafkaConsumer;
 use Rossel\RosselKafka\Model\MessageInterface;
 use Rossel\RosselKafka\Model\Topic;
 
 interface KafkaConnectorInterface
 {
-    public function send(Topic|RdKafkaTopic $topic, MessageInterface $message): void;
+    public function send(Topic $topic, MessageInterface $message): void;
 
-    public function createConsumer(Topic $topic): RdKafkaConsumer;
+    /**
+     * Returns a consumer already subscribed to the topic.
+     */
+    public function createConsumer(Topic $topic): KafkaConsumer;
 }

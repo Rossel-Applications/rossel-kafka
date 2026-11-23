@@ -12,7 +12,7 @@
     ],
     "require": {
         "php": "^8.2",
-        "enqueue/rdkafka": "^0.10.20",
+        "ext-rdkafka": "^6.0",
         "psr/log": "^3.0",
         "ramsey/uuid": "^4.7",
         "symfony/config": "^6.4 || ^7.0",
