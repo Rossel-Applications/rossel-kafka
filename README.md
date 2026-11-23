@@ -163,6 +163,8 @@ $message = new Message(
 $kafkaConnector->send($topic, $message);
 ```
 
+`send()` returns once the broker has acknowledged the message, so you can then acknowledge its source (mark a row as sent, commit an offset…). If the broker refuses the message or does not acknowledge it within 30 seconds, it throws a `MessageNotDeliveredException`: leave the source unacknowledged and send again later. The broker may still have written the message, so a resend can create a duplicate: consumers must be idempotent.
+
 ### Consume messages
 
 Implement `ConsumerInterface`. With autoconfiguration (the Symfony default), the service is tagged `rossel_kafka.consumer` for you:

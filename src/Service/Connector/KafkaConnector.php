@@ -6,8 +6,10 @@ namespace Rossel\RosselKafka\Service\Connector;
 
 use RdKafka\Conf;
 use RdKafka\KafkaConsumer;
+use RdKafka\Message;
 use RdKafka\Producer;
 use RdKafka\ProducerTopic;
+use Rossel\RosselKafka\Exception\MessageNotDeliveredException;
 use Rossel\RosselKafka\Exception\UnauthorizedTopicOperationException;
 use Rossel\RosselKafka\Model\MessageInterface;
 use Rossel\RosselKafka\Model\Topic;
@@ -20,6 +22,9 @@ final class KafkaConnector implements KafkaConnectorInterface
     private ?array $commonGlobalConfig = null;
 
     private ?Producer $rdKafkaProducer = null;
+
+    // Set by the delivery report of the message being sent.
+    private ?string $deliveryError = null;
 
     /** @var array<string, ProducerTopic> */
     private array $producerTopics = [];
@@ -48,11 +53,15 @@ final class KafkaConnector implements KafkaConnectorInterface
         private readonly SslCertificateProvider $sslCertificateProvider,
         #[Autowire(param: 'rossel_kafka.broker.debug')]
         private readonly ?string $debugLevel = null,
+        private readonly int $deliveryTimeoutMs = 30_000,
     ) {
     }
 
     /**
-     * Send a message to a Kafka topic. The record value is the raw body, metadata travels in Kafka headers.
+     * Send a message to a Kafka topic and wait until the broker acknowledges it, so that a caller can acknowledge
+     * its own source once this method returns. The record value is the raw body, metadata travels in Kafka headers.
+     *
+     * @throws MessageNotDeliveredException when the broker refuses the message or does not acknowledge it in time
      */
     public function send(Topic $topic, MessageInterface $message): void
     {
@@ -69,7 +78,18 @@ final class KafkaConnector implements KafkaConnectorInterface
             $message->getKey(),
             $message->getHeaders(),
         );
-        $producer->poll(0);
+        // librdkafka checks for expired messages once per second: wait past that for its delivery report.
+        $flushResult = $producer->flush($this->deliveryTimeoutMs + 1_000);
+        $deliveryError = $this->deliveryError;
+        $this->deliveryError = null;
+
+        if (\RD_KAFKA_RESP_ERR_NO_ERROR !== $flushResult) {
+            throw MessageNotDeliveredException::to($topic, rd_kafka_err2str($flushResult));
+        }
+
+        if (null !== $deliveryError) {
+            throw MessageNotDeliveredException::to($topic, $deliveryError);
+        }
     }
 
     /**
@@ -91,9 +111,14 @@ final class KafkaConnector implements KafkaConnectorInterface
     private function producer(): Producer
     {
         if (null === $this->rdKafkaProducer) {
-            $this->rdKafkaProducer = new Producer($this->conf($this->producerConfig()));
-            // linger.ms buffers messages: deliver them before the process exits.
-            register_shutdown_function($this->rdKafkaProducer->flush(...), -1);
+            $conf = $this->conf($this->producerConfig());
+            // Served by flush(): the broker's answer for each message.
+            $conf->setDrMsgCb(function (Producer $producer, Message $message): void {
+                if (\RD_KAFKA_RESP_ERR_NO_ERROR !== $message->err) {
+                    $this->deliveryError = $message->errstr();
+                }
+            });
+            $this->rdKafkaProducer = new Producer($conf);
         }
 
         return $this->rdKafkaProducer;
@@ -191,7 +216,8 @@ final class KafkaConnector implements KafkaConnectorInterface
             'linger.ms' => '100',
             'batch.size' => '16384',
             'request.required.acks' => 'all',
-            'delivery.timeout.ms' => '518400000', // 6 days
+            // send() gives up at the same time, so a Kafka outage fails the call instead of blocking it.
+            'delivery.timeout.ms' => (string) $this->deliveryTimeoutMs,
             'compression.type' => 'gzip',
         ];
     }
